@@ -583,6 +583,18 @@ h2 {font:normal clamp(21px,2.8vw,32px)/1.17 var(--display);color:var(--wine);let
  .ticket-count b {font-size:28px;}
  .result-admin-row .btn {font-size:9px;padding:8px;}
 }
+/* Dos quinielas independientes: Liga de fin de semana y Europa de entre semana. */
+.competition-choice{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;margin:21px 0 12px}
+.competition-option{min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:9px;padding:18px 20px;text-align:left;border:4px solid var(--ink);box-shadow:5px 5px 0 var(--ink);background:var(--cream);color:var(--ink);font-family:var(--body)}
+.competition-option:nth-child(2){background:#e4ebff}
+.competition-option strong{font:normal clamp(15px,2vw,22px)/1.15 var(--display);color:var(--wine)}
+.competition-option small{font:700 11px/1.5 var(--pixel)}
+.competition-option.active{background:var(--gold);outline:3px solid var(--wine);outline-offset:2px}
+.competition-option:hover{transform:translateY(-2px)}
+.competition-status{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:var(--paper);padding:12px 16px;border:3px solid var(--ink);font-size:12px;line-height:1.5;margin-bottom:21px}
+.competition-status b{color:var(--wine);font:700 11px var(--pixel)}
+.competition-status span{flex:1;min-width:220px;font-weight:700}
+@media(max-width:680px){.competition-choice{grid-template-columns:1fr;gap:11px}.competition-option{padding:12px 14px}.competition-option strong{font-size:16px}.competition-option small{font-size:10px}}
 </style>
 </head>
 <body>
@@ -593,6 +605,12 @@ h2 {font:normal clamp(21px,2.8vw,32px)/1.17 var(--display);color:var(--wine);let
 var app = document.getElementById('app');
 var players = ['Luis','Ramón','Ignacio','Mario','Curro'];
 var codes = ['H','D','A','BY','BN'];
+var EURO_CODES=[401,402,403];
+var COMPETITION_NAMES={140:'PRIMERA DIVISIÓN',141:'SEGUNDA DIVISIÓN',401:'CHAMPIONS LEAGUE',402:'EUROPA LEAGUE',403:'CONFERENCE LEAGUE'};
+function safeCompetition(type){return type==='europa'?'europa':'liga';}
+function weekKey(w,type){return safeCompetition(type)==='europa'?w+'|europa':w;}
+function isLeagueAllowed(id,type){return safeCompetition(type)==='europa'?EURO_CODES.includes(Number(id)):[140,141].includes(Number(id));}
+
 // Plantillas de Primera (20) y Segunda (22), temporada oficial 2026/27.
 var TEAM_NAMES = {
   140: ['Athletic Club','Atlético de Madrid','CA Osasuna','RC Celta','Deportivo Alavés','Elche CF','FC Barcelona','Getafe CF','Levante UD','Málaga CF','Racing de Santander','Rayo Vallecano','RC Deportivo','RCD Espanyol','Real Betis','Real Madrid','Real Sociedad','Sevilla FC','Valencia CF','Villarreal CF'],
@@ -609,22 +627,31 @@ if(!db.resultChecks||typeof db.resultChecks!=='object')db.resultChecks={};
 var remote=storeRead(SOURCE_KEY,{fixtures:[],odds:{},oddsUpdated:null,updatedAt:0,source:null});
 var sourceError='';var sourceFetching=false;var sourcePromise=null;
 var resultError='';var resultsBusy=false;var resultsPromise=null;
-function localWeek(w){if(!db.weeks[w])db.weeks[w]={submissions:{},votes:{},fixed:null,fixtures:[],manualOdds:{}};var b=db.weeks[w];b.submissions=b.submissions||{};b.votes=b.votes||{};b.fixtures=b.fixtures||[];b.manualOdds=b.manualOdds||{};return b;}
+function localWeek(w,type){var k=weekKey(w,type);if(!db.weeks[k])db.weeks[k]={submissions:{},votes:{},fixed:null,fixtures:[],manualOdds:{}};var b=db.weeks[k];b.submissions=b.submissions||{};b.votes=b.votes||{};b.fixtures=b.fixtures||[];b.manualOdds=b.manualOdds||{};return b;}
 function persist(){if(!storeWrite(DB_KEY,db))throw new Error('No se pudo guardar: almacenamiento local lleno o bloqueado.');}
 function validOdd(x){var v=Number(x);return Number.isFinite(v)&&v>1&&v<100000?v:null;}
 function normalized(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();}
 function leagueOf(s){var t=normalized(s);if(!/spain|espana|laliga/.test(t)||/rfef|femeni|femenin|women|woman|youth|u19|u21|u23|friendly|cup|copa|tercera/.test(t))return 0;if(/segunda|hypermotion|la liga 2|laliga2/.test(t))return 141;if(/primera|la liga|laliga|ea sports/.test(t))return 140;return 0;}
+function europeanLeagueOf(s){
+ var t=normalized(s);
+ if(/women|woman|femeni|femenin|female|youth|u17|u19|u20|u21|u23|qualif|qualifying|friendly|futsal/.test(t))return 0;
+ // Conference antes de Europa: los nombres antiguos decían «Europa Conference League».
+ if(/conference league|liga conferencia|conference cup/.test(t))return 403;
+ if(/europa league|liga europa/.test(t))return 402;
+ if(/champions league|liga campeones/.test(t))return 401;
+ return 0;
+}
 function valueFromQuote(q){return q&&!q.suspended&&!q.stale?validOdd(q.odds_dec):null;}
 function mapQuotes(m){var out={};var qs=Array.isArray(m.quotes)?m.quotes:[];qs.forEach(function(q){var market=normalized(q.group_name||'');var tag=normalized(q.n2||'');var label=normalized(q.label||'');var group=String(q.group_id||'');var v=valueFromQuote(q);if(!v)return;var ft=(group==='40'||(market==='full time result'&&q.phase!=='inplay'));if(ft){if(tag==='1'||label==='home'||label===normalized(m.home))out.H=v;else if(tag==='x'||label==='draw'||label==='tie'||label==='empate')out.D=v;else if(tag==='2'||label==='away'||label===normalized(m.away))out.A=v;}
 if(market==='both teams to score'||market==='both teams score'||market==='both teams to score yes no'){
  if(label==='yes'||label==='si')out.BY=v; else if(label==='no')out.BN=v;
 }
 });return out;}
-function remoteMatch(m){var league=leagueOf(m.league);var id=Number(m.id),start=new Date(m.kickoff_utc||m.start||'');if(!league||!Number.isSafeInteger(id)||id<=0||isNaN(start.getTime())||!m.home||!m.away||m.in_play)return null;
+function remoteMatch(m){var league=leagueOf(m.league)||europeanLeagueOf(m.league);var id=Number(m.id),start=new Date(m.kickoff_utc||m.start||'');if(!league||!Number.isSafeInteger(id)||id<=0||isNaN(start.getTime())||!m.home||!m.away||m.in_play)return null;
 return {id:id,league:league,home:String(m.home),away:String(m.away),start:start.toISOString(),homeLogo:'',awayLogo:'',source:'MoviOdds'};}
 function mergeRemoteFixtures(oldList,newList){var byId=new Map();(oldList||[]).forEach(function(x){if(x&&x.id)byId.set(x.id,x);});newList.forEach(function(x){byId.set(x.id,x);});return Array.from(byId.values()).filter(function(x){return new Date(x.start).getTime()>Date.now()-30*86400000;});}
 function fetchJSON(url){var ctl=new AbortController(),timeout=setTimeout(function(){ctl.abort();},17000);return fetch(url,{signal:ctl.signal,cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).finally(function(){clearTimeout(timeout);});}
-async function refreshSource(force){if(sourcePromise)return sourcePromise;if(!force&&remote.updatedAt&&Date.now()-remote.updatedAt<12*60000)return;sourceFetching=true;sourceError='';
+async function refreshSource(force){if(sourcePromise)return sourcePromise.then(function(){return remote.detailWeek!==week||remote.detailCompetition!==competition?refreshSource(force):undefined;});if(!force&&remote.updatedAt&&Date.now()-remote.updatedAt<12*60000&&remote.detailWeek===week&&remote.detailCompetition===competition)return;sourceFetching=true;sourceError='';
 sourcePromise=(async function(){
  // Primero se consulta un tablero compacto de 1X2. En algunos encuentros el proveedor
  // no incluye 'Ambos marcan'; nunca se inventa esa cuota.
@@ -634,8 +661,7 @@ sourcePromise=(async function(){
  // Obtener BTTS y cuotas completas de cada partido de la semana desde el
  // endpoint DOCUMENTADO /snapshot?fi=..., sin descargar 100 MB de cuotas globales.
  // Tres conexiones simultáneas como máximo para no castigar el servicio gratuito.
- var from=Date.parse(week+'T00:00:00Z')-2*3600000,until=from+7*86400000+3*3600000;
- var target=fixtures.filter(function(f){var time=Date.parse(f.start);return time>=from&&time<until&&time>Date.now();}).slice(0,27);
+ var target=fixtures.filter(function(f){return isLeagueAllowed(f.league,competition)&&inEdition(f,week,competition)&&Date.parse(f.start)>Date.now();}).slice(0,27);
  var next=0,failed=0;
  async function fetchOne(){while(next<target.length){var f=target[next++];try{
   var detail=await fetchJSON('https://moviodds.com/snapshot?fi='+encodeURIComponent(f.id));
@@ -644,38 +670,67 @@ sourcePromise=(async function(){
  }catch(_){failed++;}}}
  await Promise.all([fetchOne(),fetchOne(),fetchOne()]);
  if(failed>0)sourceError='No se ha podido consultar el detalle de '+failed+' partido(s). Las cuotas no publicadas se indican con —; puedes introducirlas manualmente.';
- remote={fixtures:mergeRemoteFixtures(remote.fixtures,fixtures),odds:odds,oddsUpdated:new Date().toISOString(),updatedAt:Date.now(),source:'MoviOdds · Bet365'};
+ remote={fixtures:mergeRemoteFixtures(remote.fixtures,fixtures),odds:odds,oddsUpdated:new Date().toISOString(),updatedAt:Date.now(),detailWeek:week,detailCompetition:competition,source:'MoviOdds · Bet365'};
  storeWrite(SOURCE_KEY,remote);
- })().catch(function(e){sourceError='No se pudieron actualizar las cuotas automáticas ('+e.message+'). Puede ser la conexión, CORS o el proveedor. Puedes introducir los partidos y cuotas manualmente.';}).finally(function(){sourceFetching=false;sourcePromise=null;if(data){var lastWeek=week;var previousDraft=draft.slice(),previousBallot=ballot.slice();data=buildState(lastWeek);draft=previousDraft;ballot=previousBallot;render();}});
+ })().catch(function(e){sourceError='No se pudieron actualizar las cuotas automáticas ('+e.message+'). Puede ser la conexión, CORS o el proveedor. Puedes introducir los partidos y cuotas manualmente.';}).finally(function(){sourceFetching=false;sourcePromise=null;if(data){var lastWeek=week;var previousDraft=draft.slice(),previousBallot=ballot.slice();data=buildState(lastWeek,competition);draft=previousDraft;ballot=previousBallot;render();}});
  return sourcePromise;
 }
-function weekFixtures(w){var b=localWeek(w);var lo=Date.parse(w+'T00:00:00Z')-2*3600000,hi=lo+7*86400000+3*3600000;var byId=new Map();(remote.fixtures||[]).concat(b.fixtures).forEach(function(f){var at=Date.parse(f.start);if(Number.isFinite(at)&&at>=lo&&at<hi)byId.set(Number(f.id),f);});return [...byId.values()].sort(function(a,b){return Date.parse(a.start)-Date.parse(b.start);});}
-function weekOdds(w,fixtures){var manual=localWeek(w).manualOdds||{},out={};fixtures.forEach(function(f){var r=remote.odds&&remote.odds[String(f.id)]||{},m=manual[String(f.id)]||{},merged={};codes.forEach(function(c){merged[c]=validOdd(r[c])||validOdd(m[c])||null;});out[String(f.id)]=merged;});return out;}
+// Una edición de Liga agrupa el fin de semana (viernes-domingo y el cierre del lunes).
+// Europa agrupa exclusivamente los partidos UEFA de la semana lunes-domingo.
+function inEdition(f,w,type){
+ var d=Date.parse(w+'T00:00:00Z')-2*3600000,at=Date.parse(f.start);
+ if(!Number.isFinite(at))return false;
+ return safeCompetition(type)==='liga'?at>=d+4*86400000&&at<d+8*86400000+3*3600000:at>=d&&at<d+7*86400000+3*3600000;
+}
+function weekFixtures(w,type){var b=localWeek(w,type),byId=new Map();(remote.fixtures||[]).concat(b.fixtures).forEach(function(f){if(isLeagueAllowed(f.league,type)&&inEdition(f,w,type))byId.set(Number(f.id),f);});return [...byId.values()].sort(function(a,b){return Date.parse(a.start)-Date.parse(b.start);});}
+function weekOdds(w,fixtures,type){var manual=localWeek(w,type).manualOdds||{},out={};fixtures.forEach(function(f){var r=remote.odds&&remote.odds[String(f.id)]||{},m=manual[String(f.id)]||{},merged={};codes.forEach(function(c){merged[c]=validOdd(r[c])||validOdd(m[c])||null;});out[String(f.id)]=merged;});return out;}
 function makeRanking(submissions,votes,fixtures){var ids=new Set(fixtures.map(function(f){return Number(f.id);})), rows=new Map();players.forEach(function(player){var record=submissions[player];(record&&record.picks||[]).forEach(function(p){if(!ids.has(Number(p.fixtureId))||codes.indexOf(p.market)<0)return;var k=String(p.fixtureId)+':'+p.market;if(!rows.has(k))rows.set(k,{id:k,fixtureId:Number(p.fixtureId),market:p.market,proposals:0,voters:0,players:[]});var r=rows.get(k);if(r.players.indexOf(player)<0){r.players.push(player);r.proposals++;}});});players.forEach(function(player){var rec=votes[player];new Set(rec&&rec.ids||[]).forEach(function(k){if(rows.has(k))rows.get(k).voters++;});});return [...rows.values()].sort(function(a,b){return b.proposals-a.proposals||b.voters-a.voters||a.id.localeCompare(b.id);});}
 function consensusOf(ranking,fixed){var byId=new Map(ranking.map(function(r){return [r.id,r];}));if(fixed&&Array.isArray(fixed.ids)&&fixed.ids.length===4){var chosen=fixed.ids.map(function(id){return byId.get(id);});if(chosen.every(Boolean)&&new Set(chosen.map(function(r){return r.fixtureId;})).size===4)return {selected:fixed.ids,pending:[],fixed:true,complete:true,fixedAt:fixed.at};}
 var selected=[],used=new Set(),pending=[];while(selected.length<4){var pool=ranking.filter(function(r){return !used.has(r.fixtureId)&&selected.indexOf(r.id)<0;});if(!pool.length)break;var top=pool[0],group=pool.filter(function(r){return r.proposals===top.proposals&&r.voters===top.voters;});if(group.length>4-selected.length||new Set(group.map(function(r){return r.fixtureId;})).size!==group.length){pending=group.map(function(r){return r.id;});break;}group.forEach(function(r){selected.push(r.id);used.add(r.fixtureId);});}return {selected:selected,pending:pending,fixed:false,complete:selected.length===4,fixedAt:null};}
-function buildState(w){var b=localWeek(w),f=weekFixtures(w),ranking=makeRanking(b.submissions,b.votes,f),saved={};
+function publication(w,type,fixtures){
+ var today=todayMadrid(),t=safeCompetition(type),f=fixtures||weekFixtures(w,type);
+ if(t==='liga'){
+  var first=addDays(w,4),last=addDays(w,6);
+  return today<first?{open:false,title:'LIGA · PRÓXIMO FIN DE SEMANA',detail:'La quiniela de Primera y Segunda se abre el viernes '+first+'.'}:
+    today>last?{open:false,title:'LIGA · JORNADA CERRADA',detail:'La quiniela de Liga está abierta de viernes a domingo. Los partidos del lunes pueden formar parte del boleto ya guardado.'}:
+    {open:true,title:'LIGA · FIN DE SEMANA',detail:'Disponible de viernes a domingo: solo Primera y Segunda. Nunca se mezclan partidos europeos.'};
+ }
+ if(today<w)return {open:false,title:'EUROPA · AÚN NO ABIERTA',detail:'La quiniela europea se abre el lunes '+w+' y queda separada de la Liga.'};
+ if(mondayISO(today)!==w)return {open:false,title:'EUROPA · JORNADA TERMINADA',detail:'La ventana europea de esta semana ha terminado. Puedes consultar sus boletos en el historial.'};
+ if(!f.length)return {open:false,title:'EUROPA · SIN PARTIDOS DETECTADOS',detail:'No hay partidos UEFA detectados para esta semana. Puedes introducir encuentros reales manualmente para activar esta edición.'};
+ var end=Math.max.apply(null,f.map(function(x){return Date.parse(x.start);})) + 3*3600000;
+ var finished=f.every(function(x){var r=db.results&&db.results[String(x.id)];return r&&r.status==='finished';});
+ if(finished||Date.now()>=end)return {open:false,title:'EUROPA · PARTIDOS TERMINADOS',detail:'Ha terminado la jornada europea. Las quinielas fijadas quedan conservadas en el historial.'};
+ return {open:true,title:'EUROPA · ENTRE SEMANA',detail:'Disponible desde el lunes hasta que acaben los partidos de Champions, Europa League y Conference. Sin resultados finales confirmados, se estima el cierre tres horas después del último comienzo.'};
+}
+function canAddManualFixture(w,type){
+ var today=todayMadrid();
+ return safeCompetition(type)==='europa'?mondayISO(today)===w&&today<=addDays(w,4):today>=addDays(w,4)&&today<=addDays(w,6);
+}
+function canEditFixture(f,w,type){return publication(w,type,weekFixtures(w,type)).open&&Date.parse(f.start)>Date.now()&&isLeagueAllowed(f.league,type);}
+function buildState(w,type){type=safeCompetition(type);var b=localWeek(w,type),f=weekFixtures(w,type),ranking=makeRanking(b.submissions,b.votes,f),saved={};
 // Migrar combinadas fijadas con el HTML anterior, siempre que todavía existan sus partidos.
 if(b.fixed&&!b.ticket&&Array.isArray(b.fixed.ids)&&b.fixed.ids.length===4){
   var rows=b.fixed.ids.map(function(id){return ranking.find(function(r){return r.id===id;});});
   if(rows.every(Boolean)&&new Set(rows.map(function(r){return r.fixtureId;})).size===4){
-    try{b.ticket=frozenTicket(w,ranking,b.fixed.ids,f,weekOdds(w,f));b.ticket.fixedAt=b.fixed.at||b.ticket.fixedAt;persist();}catch(_){b.ticket=null;}
+    try{b.ticket=frozenTicket(w,type,ranking,b.fixed.ids,f,weekOdds(w,f,type));b.ticket.fixedAt=b.fixed.at||b.ticket.fixedAt;persist();}catch(_){b.ticket=null;}
   }
 }
 players.forEach(function(p){var rec=b.submissions[p];(rec&&rec.picks||[]).forEach(function(x){if(validOdd(x.savedOdd))saved[String(x.fixtureId)+':'+x.market]=Number(x.savedOdd);});});var warnings=[];if(sourceError)warnings.push(sourceError);if(!f.length&&sourceFetching)warnings.push('Consultando partidos y cuotas sin registro…');
-return {week:w,currentWeek:mondayISO(todayMadrid()),players:players,configured:true,persistent:false,pinsRequired:false,adminEnabled:true,oddsCacheHours:0.2,fixtures:f,teams:ALL_TEAMS,odds:weekOdds(w,f),oddsUpdated:remote.oddsUpdated,warnings:warnings,cash:db.cash||{cents:null,updatedBy:null,at:null},archivedOdds:saved,submissions:b.submissions,votes:b.votes,ranking:ranking,ticket:b.ticket||null,consensus:b.ticket?{selected:b.ticket.selections.map(function(p){return String(p.fixtureId)+':'+p.market;}),pending:[],fixed:true,complete:true,fixedAt:b.ticket.fixedAt}:consensusOf(ranking,b.fixed),generatedAt:new Date().toISOString()};}
+return {week:w,competition:type,publication:publication(w,type,f),currentWeek:mondayISO(todayMadrid()),players:players,configured:true,persistent:false,pinsRequired:false,adminEnabled:true,oddsCacheHours:0.2,fixtures:f,teams:ALL_TEAMS,odds:weekOdds(w,f,type),oddsUpdated:remote.oddsUpdated,warnings:warnings,cash:db.cash||{cents:null,updatedBy:null,at:null},archivedOdds:saved,submissions:b.submissions,votes:b.votes,ranking:ranking,ticket:b.ticket||null,consensus:b.ticket?{selected:b.ticket.selections.map(function(p){return String(p.fixtureId)+':'+p.market;}),pending:[],fixed:true,complete:true,fixedAt:b.ticket.fixedAt}:consensusOf(ranking,b.fixed),generatedAt:new Date().toISOString()};}
 // Las selecciones fijadas se congelan con equipos, fecha y cuota. El historial
 // no depende de que el proveedor continúe publicando los partidos antiguos.
 function archiveTickets(){
-  return Object.keys(db.weeks).sort().reverse().map(function(w){return db.weeks[w]&&db.weeks[w].ticket;})
-    .filter(function(t){return t&&Array.isArray(t.selections)&&t.selections.length===4;});
+  return Object.keys(db.weeks).map(function(k){return db.weeks[k]&&db.weeks[k].ticket;})
+    .filter(function(t){return t&&Array.isArray(t.selections)&&t.selections.length===4;})
+    .sort(function(a,b){return Date.parse(b.fixedAt||b.week)-Date.parse(a.fixedAt||a.week);});
 }
 function allArchivedPicks(){return archiveTickets().flatMap(function(t){return t.selections;});}
-function frozenTicket(w,rows,ids,fixtures,odds){
-  return {week:w,fixedAt:new Date().toISOString(),selections:ids.map(function(id){
+function frozenTicket(w,type,rows,ids,fixtures,odds){
+  return {week:w,competition:safeCompetition(type),fixedAt:new Date().toISOString(),selections:ids.map(function(id){
     var r=rows.find(function(row){return row.id===id;}),f=fixtures.find(function(x){return x.id===r.fixtureId;});
     var q=odds[String(f.id)]||{};
-    var manual=localWeek(w).manualOdds[String(f.id)]||{};
+    var manual=localWeek(w,type).manualOdds[String(f.id)]||{};
     var isManual=(!validOdd(remote.odds&&remote.odds[String(f.id)]&&remote.odds[String(f.id)][r.market])&&validOdd(manual[r.market]));
     return {fixtureId:f.id,market:r.market,home:f.home,away:f.away,league:f.league,start:f.start,
       matchSource:f.source||'desconocida',odd:validOdd(q[r.market]),oddSource:validOdd(q[r.market])?(isManual?'manual':'MoviOdds'):'no disponible'};
@@ -725,7 +780,13 @@ function resultFromProvider(json,p){
 async function refreshResults(force){
   if(resultsPromise)return resultsPromise;
   var now=Date.now(),uniq=new Map();
-  allArchivedPicks().forEach(function(p){
+  // También se verifican partidos europeos de la edición abierta, aunque el grupo
+  // todavía no haya fijado boleto, para detectar cuándo finalizó la jornada.
+  var watched=allArchivedPicks();
+  if(data&&data.competition==='europa')data.fixtures.forEach(function(f){
+    watched.push({fixtureId:f.id,home:f.home,away:f.away,start:f.start,matchSource:f.source});
+  });
+  watched.forEach(function(p){
     var id=String(p.fixtureId), last=Number(db.resultChecks[id]||0);
     if(p.matchSource==='manual'||!canEnterScore(p)||finalResult(p)||uniq.has(id))return;
     if(!force&&now-last<20*60000)return;
@@ -754,8 +815,8 @@ async function refreshResults(force){
   return resultsPromise;
 }
 function parseAmount(x){var v=String(x).trim().replace(',','.');if(!/^(0|[1-9]\d{0,7})(\.\d{1,2})?$/.test(v))throw new Error('Saldo no válido: usa de 0 a 99.999.999,99 € y máximo dos decimales.');var a=v.split('.');return +a[0]*100+Number((a[1]||'').padEnd(2,'0'));}
-function validatePicks(picks,w){if(!Array.isArray(picks)||picks.length!==4)throw new Error('Debes elegir exactamente cuatro partidos.');var fs=weekFixtures(w),ids=new Set();picks.forEach(function(p){var f=fs.find(function(x){return x.id===Number(p.fixtureId);});if(!f||codes.indexOf(p.market)<0||!available(f))throw new Error('Hay partidos inválidos o ya empezados.');if(ids.has(f.id))throw new Error('No se permite repetir un partido.');ids.add(f.id);});}
-function validateBallot(ids,w){if(!Array.isArray(ids)||ids.length>4||new Set(ids).size!==ids.length)throw new Error('Votación inválida (máximo cuatro).');var state=buildState(w),byId=new Map(state.ranking.map(function(r){return [r.id,r];})),fixtures=new Set();ids.forEach(function(id){var r=byId.get(id),f=r&&state.fixtures.find(function(x){return x.id===r.fixtureId;});if(!f||!available(f)||fixtures.has(f.id))throw new Error('La papeleta tiene un partido repetido o ya comenzado.');fixtures.add(f.id);});}
+function validatePicks(picks,w,type){if(!publication(w,type,weekFixtures(w,type)).open)throw new Error('Esta quiniela está fuera de su periodo de publicación.');if(!Array.isArray(picks)||picks.length!==4)throw new Error('Debes elegir exactamente cuatro partidos.');var fs=weekFixtures(w,type),ids=new Set();picks.forEach(function(p){var f=fs.find(function(x){return x.id===Number(p.fixtureId);});if(!f||codes.indexOf(p.market)<0||!canEditFixture(f,w,type))throw new Error('Hay partidos inválidos o ya empezados.');if(ids.has(f.id))throw new Error('No se permite repetir un partido.');ids.add(f.id);});}
+function validateBallot(ids,w,type){if(!publication(w,type,weekFixtures(w,type)).open)throw new Error('Esta quiniela está fuera de su periodo de publicación.');if(!Array.isArray(ids)||ids.length>4||new Set(ids).size!==ids.length)throw new Error('Votación inválida (máximo cuatro).');var state=buildState(w,type),byId=new Map(state.ranking.map(function(r){return [r.id,r];})),fixtures=new Set();ids.forEach(function(id){var r=byId.get(id),f=r&&state.fixtures.find(function(x){return x.id===r.fixtureId;});if(!f||!canEditFixture(f,w,type)||fixtures.has(f.id))throw new Error('La papeleta tiene un partido repetido o ya comenzado.');fixtures.add(f.id);});}
 
 var data = null;
 var selectedPlayer = localStorage.getItem('porra5-player') || '';
@@ -768,6 +829,9 @@ var view = 'picks';
 var filter = 'all';
 var search = '';
 var week = mondayISO(todayMadrid());
+// Por defecto, Europa de lunes a jueves y Liga de viernes a domingo.
+var currentDay=new Date(todayMadrid()+'T12:00:00Z').getUTCDay();
+var competition = currentDay>=1&&currentDay<=4?'europa':'liga';
 var notice = '';
 var noticeType = 'success';
 var busy = false;
@@ -799,27 +863,28 @@ function nameMatch(p){var f=fixture(p.fixtureId);return f?f.home+' · '+f.away:'
 function pickId(p){return String(p.fixtureId)+':'+p.market;}
 function serverRows(){return data&&data.ranking||[];}
 function rowToPick(r){return {fixtureId:r.fixtureId,market:r.market};}
-function available(f){return new Date(f.start).getTime()>Date.now();}
+function available(f){return !!(data&&data.publication&&data.publication.open)&&new Date(f.start).getTime()>Date.now();}
 function notify(s,type){notice=s;noticeType=type||'success';render();}
 async function request(url,options){
- if(url.indexOf('/api/state')===0){var p=new URLSearchParams(url.split('?')[1]||''),w=p.get('week')||week;return buildState(w);}
+ if(url.indexOf('/api/state')===0){var p=new URLSearchParams(url.split('?')[1]||''),w=p.get('week')||week;return buildState(w,p.get('competition')||competition);}
  var body=options&&options.body?JSON.parse(options.body):{},path=url;
  if(path==='/api/cash'){
    var cents=parseAmount(body.amount);db.cash={cents:cents,updatedBy:players.includes(body.player)?body.player:'Anónimo',at:new Date().toISOString()};persist();return {ok:true,message:'¡Caja actualizada en este navegador!',cash:db.cash};
  }
- var w=body.week||week,b=localWeek(w);
+ var w=body.week||week,type=safeCompetition(body.competition||competition),b=localWeek(w,type);
  if(path==='/api/submission'){
-  if(!players.includes(body.player))throw new Error('Selecciona primero tu nombre.');validatePicks(body.picks,w);
-  var odds=weekOdds(w,weekFixtures(w));b.submissions[body.player]={picks:body.picks.map(function(p){return {fixtureId:p.fixtureId,market:p.market,savedOdd:validOdd(odds[String(p.fixtureId)]&&odds[String(p.fixtureId)][p.market])};}),at:new Date().toISOString()};persist();return {ok:true,message:'Tus cuatro pronósticos están guardados localmente.'};
+  if(!players.includes(body.player))throw new Error('Selecciona primero tu nombre.');validatePicks(body.picks,w,type);
+  var odds=weekOdds(w,weekFixtures(w,type),type);b.submissions[body.player]={picks:body.picks.map(function(p){return {fixtureId:p.fixtureId,market:p.market,savedOdd:validOdd(odds[String(p.fixtureId)]&&odds[String(p.fixtureId)][p.market])};}),at:new Date().toISOString()};persist();return {ok:true,message:'Tus cuatro pronósticos están guardados localmente.'};
  }
  if(path==='/api/vote'){
-  if(!players.includes(body.player))throw new Error('Selecciona tu nombre.');validateBallot(body.ids,w);b.votes[body.player]={ids:body.ids,at:new Date().toISOString()};persist();return {ok:true,message:'Tu votación está guardada localmente.'};
+  if(!players.includes(body.player))throw new Error('Selecciona tu nombre.');validateBallot(body.ids,w,type);b.votes[body.player]={ids:body.ids,at:new Date().toISOString()};persist();return {ok:true,message:'Tu votación está guardada localmente.'};
  }
  if(path==='/api/fix'){
-  var state=buildState(w),byId=new Map(state.ranking.map(function(r){return [r.id,r];}));if(!Array.isArray(body.ids)||body.ids.length!==4||new Set(body.ids).size!==4)throw new Error('Debes elegir exactamente cuatro propuestas.');
+  if(!publication(w,type,weekFixtures(w,type)).open)throw new Error('Esta quiniela está fuera de su periodo de publicación.');
+  var state=buildState(w,type),byId=new Map(state.ranking.map(function(r){return [r.id,r];}));if(!Array.isArray(body.ids)||body.ids.length!==4||new Set(body.ids).size!==4)throw new Error('Debes elegir exactamente cuatro propuestas.');
   var selected=body.ids.map(function(k){return byId.get(k);});if(selected.some(function(r){return !r;})||new Set(selected.map(function(r){return r.fixtureId;})).size!==4)throw new Error('Debes seleccionar cuatro partidos diferentes.');
-  if(selected.some(function(r){return !available(state.fixtures.find(function(f){return f.id===r.fixtureId;}));}))throw new Error('No se pueden fijar partidos ya comenzados.');
-  b.ticket=frozenTicket(w,state.ranking,body.ids,state.fixtures,state.odds);
+  if(selected.some(function(r){return !canEditFixture(state.fixtures.find(function(f){return f.id===r.fixtureId;}),w,type);}))throw new Error('No se pueden fijar partidos ya comenzados.');
+  b.ticket=frozenTicket(w,type,state.ranking,body.ids,state.fixtures,state.odds);
   b.fixed={ids:body.ids,at:b.ticket.fixedAt};persist();return {ok:true,message:'¡Combinada de ChuletonBet fijada y archivada! Ya aparecerá arriba y en el historial.'};
  }
  if(path==='/api/unfix'){b.fixed=null;b.ticket=null;persist();return {ok:true,message:'Combinada desfijada y retirada del historial.'};}
@@ -828,13 +893,13 @@ async function request(url,options){
 async function load(){
   busy=true;
   try{
-    var fresh=await request('/api/state?week='+encodeURIComponent(week));
+    var fresh=await request('/api/state?week='+encodeURIComponent(week)+'&competition='+encodeURIComponent(competition));
     data=fresh;
-    if(initializedWeek!==week){
+    if(initializedWeek!==weekKey(week,competition)){
       draft=((data.submissions[selectedPlayer]||{}).picks||[]).slice();
       ballot=((data.votes[selectedPlayer]||{}).ids||[]).slice();
       manual=(data.consensus.selected||[]).slice();
-      initializedWeek=week;
+      initializedWeek=weekKey(week,competition);
     }
   }catch(e){notice='No se pudieron cargar los datos: '+e.message;noticeType='error';}
   finally{busy=false;render();if(data)refreshResults(false);}
@@ -855,12 +920,18 @@ function header(){
   '<header class="top"><div class="container top-inner"><div class="logo"><div class="logo-mark"><span>⚽</span><small>CLUB 5</small></div><div><span class="logo-title">CHULETON<i>BET</i></span><span class="logo-sub">🍷 VINO &nbsp;✦&nbsp; ⚽ FÚTBOL &nbsp;✦&nbsp; 🥩 CHULETÓN</span></div></div>'+
   '<div class="session"><span class="pill desktop">EDICIÓN '+esc(week.slice(0,4))+'</span><button class="cash-shortcut" data-action="tab" data-tab="cash" aria-label="Abrir la Caja compartida">💰 <strong>CAJA</strong> <span>'+esc(Number.isSafeInteger(amount)?euros(amount):'VER SALDO')+'</span></button><label class="player-label">TÚ ERES <select class="player-select" id="user-choice" aria-label="Selecciona tu participante"><option value="">¿Quién eres?</option>'+players.map(function(p){return '<option value="'+esc(p)+'" '+(selectedPlayer===p?'selected':'')+'>'+esc(p)+'</option>';}).join('')+'</select></label></div></div></header>';
 }
+function competitionSwitch(){
+ return '<section class="competition-choice" aria-label="Modalidad de quiniela">'+
+  '<button class="competition-option '+(competition==='liga'?'active':'')+'" data-action="competition" data-competition="liga"><strong>⚽ LIGA · FIN DE SEMANA</strong><small>Primera + Segunda · viernes a domingo</small></button>'+
+  '<button class="competition-option '+(competition==='europa'?'active':'')+'" data-action="competition" data-competition="europa"><strong>🏆 EUROPA · ENTRE SEMANA</strong><small>Champions + Europa League + Conference · desde el lunes</small></button>'+
+  '</section><div class="competition-status"><b>'+esc(data.publication.title)+'</b><span>'+esc(data.publication.detail)+'</span></div>';
+}
 function hero(){
   var ends=addDays(week,6);
   var span=''+fmtDate(week+'T12:00:00Z',{day:'numeric',month:'short'})+' – '+fmtDate(ends+'T12:00:00Z',{day:'numeric',month:'short',year:'numeric'});
   var people=players.filter(function(p){return data&&data.submissions[p]&&data.submissions[p].picks&&data.submissions[p].picks.length===4;}).length;
   var total=combo(draft);
-  return '<section class="hero"><div class="hero-copy"><div class="eyebrow">✦ EL CLUB MÁS POCO SERIO DEL FÚTBOL SERIO ✦</div><h1>CHULETÓN<br><em>BET<span>!</span></em></h1><p>Cuatro pronósticos, cinco artistas y una fe inquebrantable. Cuotas reales cuando estén disponibles, coincidencias y desempates a la vieja usanza.</p><div class="hero-tags"><span>⚽ PRIMERA + SEGUNDA</span><span>🍷 GRAN RESERVA</span><span>🥩 CORTE PREMIUM</span></div></div>'+
+  return '<section class="hero"><div class="hero-copy"><div class="eyebrow">✦ EL CLUB MÁS POCO SERIO DEL FÚTBOL SERIO ✦</div><h1>CHULETÓN<br><em>BET<span>!</span></em></h1><p>Cuatro pronósticos, cinco artistas y una fe inquebrantable. Cuotas reales cuando estén disponibles, coincidencias y desempates a la vieja usanza.</p><div class="hero-tags"><span>'+(competition==='europa'?'🏆 CHAMPIONS + EUROPA + CONFERENCE':'⚽ PRIMERA + SEGUNDA')+'</span><span>🍷 GRAN RESERVA</span><span>🥩 CORTE PREMIUM</span></div></div>'+
   '<div class="hero-aside"><div class="sticker-collage" aria-hidden="true"><div class="sticker sticker-ball">⚽</div><div class="sticker sticker-wine">🍷</div><div class="sticker sticker-steak">🥩</div><div class="sticker sticker-star">★</div><div class="sticker-caption">100% FÚTBOL<br>0% VERGÜENZA</div></div><div class="week-tools"><button class="square" data-action="prev" aria-label="Semana anterior">‹</button><span>📅 '+esc(span)+'</span><button class="square" data-action="next" aria-label="Semana siguiente">›</button></div></div></section>'+
   '<div class="ticker" aria-label="Fútbol, apuestas, vino y chuletón"><div class="ticker-track" aria-hidden="true">★ FÚTBOL DEL BUENO ★ VINO DEL CARO ★ CHULETÓN AL PUNTO ★ CUOTAS & COINCIDENCIAS ★ CHULETONBET ★ FÚTBOL DEL BUENO ★ VINO DEL CARO ★ CHULETÓN AL PUNTO ★ CUOTAS & COINCIDENCIAS ★</div></div>'+
   '<div class="grid-metrics"><div class="metric"><div class="k">👥 LA PEÑA</div><div class="v">5 <small>CRACKS</small></div></div>'+
@@ -878,7 +949,7 @@ function alerts(){
 }
 function nav(){
   return '<div class="nav">'+[
-    ['picks','⚽ Mis 4 partidos'],['rank','🏆 Coincidencias'],['vote','🗳 Votaciones'],['history','🧾 Historial'],['people','🍷 Los cinco'],['teams','🏟 Equipos'],['cash','💰 Caja']
+    ['picks',competition==='europa'?'🏆 Mis 4 de Europa':'⚽ Mis 4 de Liga'],['rank','🏆 Coincidencias'],['vote','🗳 Votaciones'],['history','🧾 Historial'],['people','🍷 Los cinco'],['teams','🏟 Equipos'],['cash','💰 Caja']
   ].map(function(item){return '<button data-action="tab" data-tab="'+item[0]+'" class="'+(view===item[0]?'active':'')+'">'+item[1]+(item[0]==='rank'?'<span class="bubble">'+serverRows().length+'</span>':'')+'</button>';}).join('')+'</div>';
 }
 function fixtureList(){
@@ -895,13 +966,20 @@ function fixtureList(){
       return '<button data-action="market" data-id="'+f.id+'" data-market="'+code+'" '+(live?'disabled':'')+' class="market-btn '+(selected?'chosen ':'')+(num(odds[code])===null?'missing':'')+'" title="'+esc(({H:'Gana '+f.home,D:'Empate',A:'Gana '+f.away,BY:'Ambos marcan: sí',BN:'Ambos marcan: no'})[code])+'"><span>'+caption+'</span><strong>'+price(odds[code])+'</strong></button>';
     }).join('');
     return '<article class="match '+(chosen?'used':'')+'" data-searchable="'+esc((f.home+' '+f.away).toLocaleLowerCase('es'))+'">'+
-      '<div class="match-top"><span>'+(f.league===140?'PRIMERA DIVISIÓN':'SEGUNDA DIVISIÓN')+'</span><span>'+esc(fmtDate(f.start))+(live?' · INICIADO':'')+'</span></div>'+
+      '<div class="match-top"><span>'+(COMPETITION_NAMES[f.league]||'COMPETICIÓN')+'</span><span>'+esc(fmtDate(f.start))+(live?' · INICIADO':'')+'</span></div>'+
       '<div class="match-teams"><div class="team">'+(f.homeLogo?'<img loading="lazy" src="'+esc(f.homeLogo)+'" alt="">':'')+'<span>'+esc(f.home)+'</span></div><span class="vs">VS</span><div class="team"><span>'+esc(f.away)+'</span>'+(f.awayLogo?'<img loading="lazy" src="'+esc(f.awayLogo)+'" alt="">':'')+'</div></div>'+
-      '<div class="market-row">'+buttons+'</div><div class="match-extras"><span>'+(Object.keys(localWeek(week).manualOdds[String(f.id)]||{}).length?'✍️ Cuotas completadas manualmente · ':'')+(f.source==='manual'?'✍️ Partido añadido manualmente':'📡 Partido detectado por '+esc(f.source||'el proveedor'))+'</span><button class="btn small ghost" data-action="manual-odds" data-id="'+f.id+'">✍️ Cuotas manuales</button>'+(f.source==='manual'?'<button class="btn small ghost" data-action="delete-fixture" data-id="'+f.id+'">Quitar partido</button>':'')+'</div></article>';
+      '<div class="market-row">'+buttons+'</div><div class="match-extras"><span>'+(Object.keys(localWeek(week,competition).manualOdds[String(f.id)]||{}).length?'✍️ Cuotas completadas manualmente · ':'')+(f.source==='manual'?'✍️ Partido añadido manualmente':'📡 Partido detectado por '+esc(f.source||'el proveedor'))+'</span><button class="btn small ghost" data-action="manual-odds" data-id="'+f.id+'">✍️ Cuotas manuales</button>'+(f.source==='manual'?'<button class="btn small ghost" data-action="delete-fixture" data-id="'+f.id+'">Quitar partido</button>':'')+'</div></article>';
   }).join('');
 }
-function teamOptions(league){return TEAM_NAMES[league].map(function(n){return '<option value="'+esc(n)+'">'+esc(n)+'</option>';}).join('');}
-function manualFixtureUI(){return '<details class="block manual-add"><summary>➕ AÑADIR PARTIDO REAL MANUALMENTE</summary><p class="description">Si no aparece un partido, introdúcelo con su fecha real. No se generan encuentros ficticios.</p><div class="manual-form"><label>División<select id="new-league"><option value="140">Primera División</option><option value="141">Segunda División</option></select></label><label>Local<select id="new-home">'+teamOptions(140)+'</select></label><label>Visitante<select id="new-away">'+teamOptions(140)+'</select></label><label>Fecha y hora de tu dispositivo<input id="new-date" type="datetime-local" required></label><button class="btn primary" data-action="add-fixture">Añadir este partido</button></div></details>';}
+function teamOptions(league){return (TEAM_NAMES[league]||[]).map(function(n){return '<option value="'+esc(n)+'">'+esc(n)+'</option>';}).join('');}
+function manualFixtureUI(){
+ var euro=competition==='europa',editable=canAddManualFixture(week,competition);
+ var select=euro?'<label>Competición<select id="new-league"><option value="401">Champions League</option><option value="402">Europa League</option><option value="403">Conference League</option></select></label>':
+   '<label>División<select id="new-league"><option value="140">Primera División</option><option value="141">Segunda División</option></select></label>';
+ var teams=euro?'<label>Equipo local<input id="new-home" maxlength="90" placeholder="Nombre real del club"></label><label>Equipo visitante<input id="new-away" maxlength="90" placeholder="Nombre real del club"></label>':
+   '<label>Local<select id="new-home">'+teamOptions(140)+'</select></label><label>Visitante<select id="new-away">'+teamOptions(140)+'</select></label>';
+ return '<details class="block manual-add"><summary>➕ AÑADIR PARTIDO REAL MANUALMENTE</summary><p class="description">Si el proveedor no publica un encuentro '+(euro?'de Champions, Europa League o Conference':'de Primera o Segunda')+', introdúcelo con su fecha real. No se generan partidos ficticios.</p><div class="manual-form">'+select+teams+'<label>Fecha y hora de tu dispositivo<input id="new-date" type="datetime-local" required></label><button class="btn primary" data-action="add-fixture" '+(!editable?'disabled title="Fuera del periodo de esta quiniela"':'')+'>Añadir este partido</button></div></details>';
+}
 function slots(){
   var result='';
   for(var i=0;i<4;i++){
@@ -917,13 +995,15 @@ function picksPanel(){
   var total=combo(draft);
   var saved=(data.submissions[selectedPlayer]||{}).picks||[];
   var same=JSON.stringify(draft)===JSON.stringify(saved);
-  return '<div class="panel-heading"><div><h2>Construye tu combinada</h2><button class="btn small ghost" data-action="refresh-odds">↻ Actualizar cuotas públicas</button><p class="description">Elige un partido y un mercado. Máximo un pronóstico por encuentro, exactamente cuatro por semana.</p></div><span class="pill light">'+(selectedPlayer?'Jugando: '+esc(selectedPlayer):'Elige tu nombre ↑')+'</span></div>'+
+  return '<div class="panel-heading"><div><h2>'+(competition==='europa'?'Tu quiniela europea':'Tu quiniela de Liga')+'</h2><button class="btn small ghost" data-action="refresh-odds">↻ Actualizar cuotas públicas</button><p class="description">Elige un partido y un mercado. Máximo un pronóstico por encuentro, exactamente cuatro por edición. Las quinielas de Liga y Europa son independientes.</p></div><span class="pill light">'+(selectedPlayer?'Jugando: '+esc(selectedPlayer):'Elige tu nombre ↑')+'</span></div>'+
     '<div class="draft-layout"><div class="fixtures-wrap"><div class="filterbar"><input id="game-search" class="filter" value="'+esc(search)+'" placeholder="Buscar equipo..." aria-label="Buscar equipos">'+
-    '<div class="chips"><button class="chip '+(filter==='all'?'on':'')+'" data-action="filter" data-filter="all">Todos</button><button class="chip '+(filter==='140'?'on':'')+'" data-action="filter" data-filter="140">Primera</button><button class="chip '+(filter==='141'?'on':'')+'" data-action="filter" data-filter="141">Segunda</button></div></div>'+
+    '<div class="chips">'+(competition==='europa'?
+    [['all','Todos'],['401','Champions'],['402','Europa L.'],['403','Conference']].map(function(e){return '<button class="chip '+(filter===e[0]?'on':'')+'" data-action="filter" data-filter="'+e[0]+'">'+e[1]+'</button>';}).join(''):
+    [['all','Todos'],['140','Primera'],['141','Segunda']].map(function(e){return '<button class="chip '+(filter===e[0]?'on':'')+'" data-action="filter" data-filter="'+e[0]+'">'+e[1]+'</button>';}).join(''))+'</div></div>'+
     '<div id="fixtures">'+fixtureList()+'</div>'+manualFixtureUI()+'</div>'+
     '<aside class="draft-sidebar"><div class="sidebar-top"><h3>Tus selecciones</h3><span class="counter">'+draft.length+' DE 4</span></div>'+slots()+'<div class="combined"><small>CUOTA TOTAL MULTIPLICADA</small><b>'+(total===null?'—':price(total))+' x</b><p>'+(draft.length<4?'Elige las cuatro selecciones para calcularla.':total===null?'Hay alguna cuota no disponible. No se estima ni se inventa.':'Se multiplican las cuatro cuotas decimales; pueden cambiar antes del partido.')+'</p></div>'+
-    '<div class="side-actions"><button class="btn primary" data-action="submit" '+(!selectedPlayer||draft.length!==4||same||busy?'disabled':'')+'>'+(busy?'Guardando...':same?'✓ Pronósticos guardados':'Guardar mis 4 pronósticos')+'</button><button class="btn ghost" data-action="reset" '+(!draft.length||busy?'disabled':'')+'>Restaurar selecciones guardadas</button></div>'+
-    '<p class="note">Puedes guardar aunque una cuota no esté disponible. En esta versión HTML no se usan PIN personales.</p></aside></div>';
+    '<div class="side-actions"><button class="btn primary" data-action="submit" '+(!data.publication.open||!selectedPlayer||draft.length!==4||same||busy?'disabled':'')+'>'+(busy?'Guardando...':same?'✓ Pronósticos guardados':'Guardar mis 4 pronósticos')+'</button><button class="btn ghost" data-action="reset" '+(!data.publication.open||!draft.length||busy?'disabled':'')+'>Restaurar selecciones guardadas</button></div>'+
+    '<p class="note">'+(!data.publication.open?'⚠ Esta edición no admite nuevos pronósticos fuera de su ventana de publicación. ':'')+'Puedes guardar aunque una cuota no esté disponible. En esta versión HTML no se usan PIN personales.</p></aside></div>';
 }
 function empty(emoji,message){return '<div class="empty"><div class="emoji">'+emoji+'</div>'+esc(message)+'</div>';}
 function rankingRow(r,i){
@@ -931,7 +1011,7 @@ function rankingRow(r,i){
   return '<div class="rank-row '+(data.consensus.selected.includes(r.id)?'top':'')+'"><span class="rank-num">'+(i+1)+'</span><div class="rank-body"><strong>'+esc(f?f.home+' – '+f.away:'Partido')+' '+(status?'<span class="status-chip '+(status.indexOf('Desempate')>=0?'wait':'')+'">'+status+'</span>':'')+'</strong><small>'+esc(label(rowToPick(r)))+' · '+esc(r.players.join(', '))+'</small></div><div class="rank-points"><div class="rank-stat"><b>'+r.proposals+'</b><span>Coincid.</span></div><div class="rank-stat"><b>'+r.voters+'</b><span>Votos</span></div><div class="rank-stat"><b>'+price(oddFor(rowToPick(r)))+'</b><span>Cuota</span></div></div></div>';
 }
 function rankingPanel(){
-  return '<div class="panel-heading"><div><h2>Las selecciones más repetidas</h2><p class="description">Primero cuentan las coincidencias de los cinco. Los votos sirven para romper empates. Nunca se elegirán dos apuestas del mismo partido.</p></div><span class="pill">'+serverRows().length+' propuestas</span></div>'+
+  return '<div class="panel-heading"><div><h2>Las selecciones más repetidas · '+(competition==='europa'?'Europa':'Liga')+'</h2><p class="description">Primero cuentan las coincidencias de los cinco. Los votos sirven para romper empates. Nunca se elegirán dos apuestas del mismo partido.</p></div><span class="pill">'+serverRows().length+' propuestas</span></div>'+
   '<div class="two-col"><div><div class="rank-list">'+(serverRows().length?serverRows().map(rankingRow).join(''):empty('📊','Cuando los participantes guarden sus cuatro pronósticos aparecerá aquí la clasificación.'))+'</div></div><div>'+finalBlock()+'</div></div>';
 }
 function finalBlock(){
@@ -946,8 +1026,8 @@ function finalBlock(){
   }
   out+='<div class="final-total"><span>Cuota combinada común</span><b>'+(total===null?'—':price(total)+' x')+'</b></div>';
   if(consensus.pending.length)out+='<p style="color:var(--amber)">⚑ Empate sin resolver entre '+consensus.pending.length+' propuestas. Votad para deshacerlo.</p>';
-  if(consensus.complete&&!consensus.fixed)out+='<div style="margin-top:15px"><button class="btn primary" data-action="fix-auto">📌 FIJAR ESTA COMBINADA Y GUARDARLA</button></div>';
-  if(data.adminEnabled)out+='<div style="margin-top:17px"><button class="btn" data-action="manual-mode">'+(consensus.fixed?'Modificar / desfijar combinada':'Gestionar desempate manual')+'</button></div>';
+  if(consensus.complete&&!consensus.fixed)out+='<div style="margin-top:15px"><button class="btn primary" data-action="fix-auto" '+(!data.publication.open?'disabled':'')+'>📌 FIJAR ESTA COMBINADA Y GUARDARLA</button></div>';
+  if(data.adminEnabled)out+='<div style="margin-top:17px"><button class="btn" data-action="manual-mode" '+(!consensus.fixed&&!data.publication.open?'disabled':'')+'>'+(consensus.fixed?'Modificar / desfijar combinada':'Gestionar desempate manual')+'</button></div>';
   out+='</div>';
   return out;
 }
@@ -964,25 +1044,25 @@ function ticketCard(t,featured){
   var overall=ticketStatus(t),total=archivedTotal(t);
   var wins=t.selections.filter(function(p){return legStatus(p)==='won';}).length;
   var lost=t.selections.filter(function(p){return legStatus(p)==='lost';}).length;
-  var isCurrent=t.week===week;
+  var type=safeCompetition(t.competition);var isCurrent=t.week===week&&type===competition;
   var start=fmtDate(t.week+'T12:00:00Z',{day:'numeric',month:'long',year:'numeric'});
   return '<article class="group-ticket '+(featured?'featured-ticket':'archive-ticket')+'">'+
-    '<div class="ticket-topline"><span>✂····· CHULETONBET · QUINIELA DE LA PEÑA ·····✂</span><span class="ticket-stamp">★ OFICIAL ★</span></div>'+
+    '<div class="ticket-topline"><span>✂····· CHULETONBET · '+(type==='europa'?'QUINIELA EUROPEA · UEFA':'QUINIELA DE LIGA · 1ª + 2ª')+' ·····✂</span><span class="ticket-stamp">★ OFICIAL ★</span></div>'+
     '<div class="ticket-head"><div><div class="ticket-kicker">⚽ 🍷 🥩 &nbsp; '+(featured?'¡EL BOLETO MÁS IMPORTANTE!':'BOLETO GUARDADO')+'</div>'+
     '<h2>'+ (featured?'LA COMBINADA <em>DEL GRUPO</em>':'QUINIELA · '+esc(start))+'</h2>'+
-    '<div class="ticket-metadata">Semana del '+esc(start)+' · Fijada el '+esc(fmtDate(t.fixedAt,{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}))+'</div></div>'+
+    '<div class="ticket-metadata">'+(type==='europa'?'🏆 CHAMPIONS · EUROPA · CONFERENCE':'⚽ PRIMERA · SEGUNDA')+' · Semana del '+esc(start)+' · Fijada el '+esc(fmtDate(t.fixedAt,{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}))+'</div></div>'+
     '<div class="overall-stamp '+overall+'">'+(overall==='won'?'🏆 COMPLETA: GANADA':overall==='lost'?'❌ COMBINADA PERDIDA':'⏳ EN JUEGO / PENDIENTE')+'</div></div>'+
     '<div class="ticket-legs">'+t.selections.map(ticketLeg).join('')+'</div>'+
     '<div class="ticket-bottom"><div class="ticket-total"><span>CUOTA FIJADA DE LOS CUATRO</span><strong>'+(total===null?'SIN CUOTA COMPLETA':price(total)+' x')+'</strong><small>Cuotas guardadas al fijarla; no varían con el mercado.</small></div>'+
     '<div class="ticket-count"><b>'+wins+' / 4</b><span>ACERTADAS</span>'+(lost?'<small>'+lost+' fallada(s)</small>':'')+'</div></div>'+
     '<div class="ticket-controls">'+
     (featured?'<button class="btn primary" data-action="tab" data-tab="history">🧾 VER HISTORIAL</button>':'')+
-    (!isCurrent?'<button class="btn ghost" data-action="go-week" data-week="'+esc(t.week)+'">📅 IR A ESTA SEMANA</button>':'')+
+    (!isCurrent?'<button class="btn ghost" data-action="go-week" data-week="'+esc(t.week)+'" data-competition="'+type+'">📅 IR A ESTA SEMANA</button>':'')+
     '<button class="btn ghost" data-action="refresh-results" '+(resultsBusy?'disabled':'')+'>↻ '+(resultsBusy?'CONSULTANDO…':'ACTUALIZAR RESULTADOS')+'</button></div>'+
     '<div class="ticket-disclaimer">Cada resultado se comprueba al finalizar el partido. Si no llega desde MoviOdds queda pendiente. Los marcadores manuales están identificados. No se infieren aciertos por las cuotas.</div></article>';
 }
 function featuredTicket(){
-  var tickets=archiveTickets();var active=data&&data.ticket;
+  var tickets=archiveTickets().filter(function(t){return safeCompetition(t.competition)===competition;});var active=data&&data.ticket;
   // Se prioriza la semana seleccionada. Si no tiene boleto, se muestra el último fijado.
   return active?ticketCard(active,true):(tickets.length?ticketCard(tickets[0],true):'');
 }
@@ -1006,15 +1086,15 @@ function historyPanel(){
 }
 function votePanel(){
   var items=serverRows();
-  return '<div class="panel-heading"><div><h2>Votación de desempate</h2><p class="description">Cada participante puede dar hasta cuatro votos. Un voto por partido. Puedes actualizar tu papeleta mientras los encuentros no hayan comenzado.</p></div><span class="pill light">'+ballot.length+' / 4 votos</span></div><div class="two-col"><div>'+
+  return '<div class="panel-heading"><div><h2>Votación de desempate · '+(competition==='europa'?'Europa':'Liga')+'</h2><p class="description">Cada participante puede dar hasta cuatro votos. Un voto por partido. Puedes actualizar tu papeleta mientras los encuentros no hayan comenzado.</p></div><span class="pill light">'+ballot.length+' / 4 votos</span></div><div class="two-col"><div>'+
   (items.length?items.map(function(r){
     var checked=ballot.includes(r.id);var f=fixture(r.fixtureId);var past=!f||!available(f);
     return '<div class="vote-choice '+(checked?'selected':'')+'"><button data-action="vote-toggle" data-id="'+esc(r.id)+'" '+(past?'disabled':'')+'><span class="check">'+(checked?'✓':'')+'</span><span class="body"><b>'+esc(nameMatch(r))+'</b><small>'+esc(label(rowToPick(r)))+' · '+r.proposals+' coincidencia(s) · '+esc(r.players.join(', '))+'</small></span><span class="count">'+r.voters+' votos</span></button></div>';
   }).join(''):empty('✓','Todavía no hay propuestas. Primero deben enviarse los pronósticos.'))+
-  '<button class="btn primary" data-action="submit-vote" '+(!selectedPlayer||busy||!items.length?'disabled':'')+'>Guardar mi votación</button><p class="note">La clasificación prioriza coincidencias; los votos desempatan. Si persiste el empate, podéis fijar los cuatro manualmente.</p></div><div>'+finalBlock()+'</div></div>';
+  '<button class="btn primary" data-action="submit-vote" '+(!data.publication.open||!selectedPlayer||busy||!items.length?'disabled':'')+'>Guardar mi votación</button><p class="note">La clasificación prioriza coincidencias; los votos desempatan. Si persiste el empate, podéis fijar los cuatro manualmente.</p></div><div>'+finalBlock()+'</div></div>';
 }
 function peoplePanel(){
-  return '<div class="panel-heading"><div><h2>Los cinco participantes</h2><p class="description">Todas las combinadas de esta semana, con las cuotas disponibles del proveedor o introducidas manualmente.</p></div></div>'+
+  return '<div class="panel-heading"><div><h2>Los cinco participantes · '+(competition==='europa'?'Europa':'Liga')+'</h2><p class="description">Todas las combinadas de esta semana, con las cuotas disponibles del proveedor o introducidas manualmente.</p></div></div>'+
   '<div class="people">'+players.map(function(player){
     var submission=data.submissions[player];var picks=submission&&submission.picks||[];
     var combined=combo(picks);
@@ -1053,7 +1133,7 @@ function manualModal(){
 function render(){
   if(!data){app.innerHTML='<div class="container" style="padding-top:110px;text-align:center"><span class="spin"></span><p style="color:#7B112C">Cargando ChuletonBet...</p></div>';return;}
   var panel=({picks:picksPanel,rank:rankingPanel,vote:votePanel,history:historyPanel,people:peoplePanel,teams:teamsPanel,cash:cashPanel})[view]();
-  app.innerHTML=header()+'<main class="container">'+featuredTicket()+hero()+alerts()+'<section class="main-card">'+nav()+'<div class="content">'+panel+'</div></section></main>'+
+  app.innerHTML=header()+'<main class="container">'+featuredTicket()+hero()+competitionSwitch()+alerts()+'<section class="main-card">'+nav()+'<div class="content">'+panel+'</div></section></main>'+
     '<div class="bottom-banner container"><span>⚽</span><b>¡QUE GANE EL MEJOR!</b><span>🍷</span><b>... Y QUE NO FALTE CHULETÓN</b><span>🥩</span></div><footer class="footer container"><span>CHULETONBET · Luis, Ramón, Ignacio, Mario y Curro</span><span>Datos deportivos: MoviOdds cuando es accesible. No afiliada a Bet365 ni LaLiga. No permite realizar apuestas.</span><span><button class="btn small ghost" data-action="export">⬇ Copia de seguridad</button> <button class="btn small ghost" data-action="import">⬆ Importar copia</button></span></footer>'+manualModal();
   if(view==='picks'&&search)filterDom();
 }
@@ -1061,7 +1141,7 @@ function filterDom(){
   var q=search.toLocaleLowerCase('es');
   document.querySelectorAll('[data-searchable]').forEach(function(el){el.hidden=!el.getAttribute('data-searchable').includes(q);});
 }
-function canAddPick(p){var f=fixture(p.fixtureId);if(!f||!available(f))return false;return true;}
+function canAddPick(p){var f=fixture(p.fixtureId);if(!f||!available(f)||!isLeagueAllowed(f.league,competition))return false;return true;}
 function applyMarket(id,market){
   if(!selectedPlayer){notify('Selecciona primero tu nombre arriba.','error');return;}
   var p={fixtureId:Number(id),market:market};if(!canAddPick(p))return;
@@ -1101,7 +1181,7 @@ function toggleVote(id,which){
 app.addEventListener('change',function(e){
   if(e.target.id==='user-choice')changePlayer(e.target.value);
   if(e.target.id==='admin-secret')adminPin=e.target.value;
-  if(e.target.id==='new-league'){var a=document.getElementById('new-home'),b=document.getElementById('new-away');if(a&&b){a.innerHTML=teamOptions(Number(e.target.value));b.innerHTML=teamOptions(Number(e.target.value));}}
+  if(e.target.id==='new-league'&&competition==='liga'){var a=document.getElementById('new-home'),b=document.getElementById('new-away');if(a&&b){a.innerHTML=teamOptions(Number(e.target.value));b.innerHTML=teamOptions(Number(e.target.value));}}
 });
 app.addEventListener('input',function(e){
   if(e.target.id==='game-search'){search=e.target.value;filterDom();}
@@ -1111,7 +1191,11 @@ app.addEventListener('click',function(event){
   var t=event.target.closest('[data-action]');if(!t)return;
   var action=t.dataset.action;
   if(action==='tab'){view=t.dataset.tab;render();return;}
-  if(action==='go-week'){week=t.dataset.week;search='';data=null;load();return;}
+  if(action==='competition'){
+    var nextType=safeCompetition(t.dataset.competition);if(nextType===competition)return;
+    competition=nextType;filter='all';search='';modal=false;data=null;load();refreshSource(false);return;
+  }
+  if(action==='go-week'){week=t.dataset.week;competition=safeCompetition(t.dataset.competition);filter='all';search='';data=null;load();refreshSource(false);return;}
   if(action==='refresh-results'){refreshResults(true);return;}
   if(action==='refresh-cash'){load();return;}
   if(action==='manual-result'||action==='clear-result'){
@@ -1133,26 +1217,32 @@ app.addEventListener('click',function(event){
     notify('Marcador final manual guardado. Aciertos y fallos recalculados.');return;
   }
   if(action==='manual-odds'){
+    if(!data.publication.open){notify('Esta edición ya no admite cambios en las cuotas.','error');return;}
     var fid=String(t.dataset.id),f=fixture(fid);if(!f)return;
-    var prev=localWeek(week).manualOdds[fid]||{};
+    var prev=localWeek(week,competition).manualOdds[fid]||{};
     var message='CUOTAS EN ORDEN: local ; empate ; visitante ; ambos marcan SÍ ; ambos marcan NO.\nDeja un apartado vacío si no conoces su cuota.\nUsa punto o coma decimal, separando los valores con punto y coma.\nEstas cuotas se mostrarán como MANUALES, no verificadas por el proveedor.';
     var raw=window.prompt(message,codes.map(function(c){return prev[c]||'';}).join('; '));if(raw===null)return;
     var parts=raw.split(';');if(parts.length!==5){notify('Necesitas cinco campos separados por punto y coma (;).','error');return;}
     var record={};for(var i=0;i<5;i++){var v=parts[i].trim().replace(',','.');if(!v)continue;if(!/^\d+(\.\d{1,3})?$/.test(v)||!validOdd(v)){notify('La cuota '+(i+1)+' no es válida. Usa cuotas mayores que 1.','error');return;}record[codes[i]]=Number(v);}
-    localWeek(week).manualOdds[fid]=record;try{persist();}catch(e){notify(e.message,'error');return;}load();return;
+    localWeek(week,competition).manualOdds[fid]=record;try{persist();}catch(e){notify(e.message,'error');return;}load();return;
   }
   if(action==='add-fixture'){
-    var league=Number(document.getElementById('new-league').value),home=document.getElementById('new-home').value,away=document.getElementById('new-away').value,date=document.getElementById('new-date').value;
-    if(home===away||!date||!TEAM_NAMES[league]||!TEAM_NAMES[league].includes(home)||!TEAM_NAMES[league].includes(away)){notify('Revisa los dos equipos, la división y la fecha real.','error');return;}
-    var start=new Date(date).toISOString();if(mondayISO(todayMadrid())&&! (Date.parse(start)>=Date.parse(week+'T00:00:00Z')-2*3600000&&Date.parse(start)<Date.parse(week+'T00:00:00Z')+7*86400000+3*3600000)){notify('La fecha debe estar dentro de la semana mostrada.','error');return;}
-    if(weekFixtures(week).some(function(f){return normalized(f.home)===normalized(home)&&normalized(f.away)===normalized(away);})){notify('Ese partido ya aparece en la semana.','error');return;}
-    localWeek(week).fixtures.push({id:Date.now(),league:league,home:home,away:away,start:start,source:'manual'});
+    var league=Number(document.getElementById('new-league').value),home=document.getElementById('new-home').value.trim(),away=document.getElementById('new-away').value.trim(),date=document.getElementById('new-date').value;
+    if(!canAddManualFixture(week,competition)){notify('Esta edición no está abierta para añadir partidos.','error');return;}
+    if(!isLeagueAllowed(league,competition)||!date||home.length<2||away.length<2||home.length>90||away.length>90||normalized(home)===normalized(away)||
+      (competition==='liga'&&(!TEAM_NAMES[league]||!TEAM_NAMES[league].includes(home)||!TEAM_NAMES[league].includes(away)))){
+      notify('Revisa los equipos, la competición y la fecha real.','error');return;
+    }
+    var start=new Date(date).toISOString();if(!inEdition({start:start},week,competition)){notify('La fecha debe estar dentro de la semana mostrada.','error');return;}
+    if(weekFixtures(week,competition).some(function(f){return normalized(f.home)===normalized(home)&&normalized(f.away)===normalized(away);})){notify('Ese partido ya aparece en la semana.','error');return;}
+    localWeek(week,competition).fixtures.push({id:Date.now(),league:league,home:home,away:away,start:start,source:'manual'});
     try{persist();}catch(e){notify(e.message,'error');return;}notice='Partido registrado localmente. Añade cuotas solo si las has consultado.';noticeType='success';load();return;
   }
   if(action==='delete-fixture'){
-    var fid=Number(t.dataset.id),used=Object.values(localWeek(week).submissions).some(function(s){return (s.picks||[]).some(function(p){return p.fixtureId===fid;});});if(used){notify('Este partido ya tiene pronósticos guardados; no se puede borrar.','error');return;}
+    if(!canAddManualFixture(week,competition)){notify('No se pueden quitar partidos fuera de la ventana de esta edición.','error');return;}
+    var fid=Number(t.dataset.id),used=Object.values(localWeek(week,competition).submissions).some(function(s){return (s.picks||[]).some(function(p){return p.fixtureId===fid;});});if(used){notify('Este partido ya tiene pronósticos guardados; no se puede borrar.','error');return;}
     if(!confirm('¿Quitar este partido manual de esta semana?'))return;
-    localWeek(week).fixtures=localWeek(week).fixtures.filter(function(f){return f.id!==fid;});delete localWeek(week).manualOdds[String(fid)];persist();load();return;
+    localWeek(week,competition).fixtures=localWeek(week,competition).fixtures.filter(function(f){return f.id!==fid;});delete localWeek(week,competition).manualOdds[String(fid)];persist();load();return;
   }
   if(action==='refresh-odds'){refreshSource(true);notice='Consultando las cuotas públicas…';noticeType='success';render();return;}
   if(action==='export'){var text=JSON.stringify({version:1,createdAt:new Date().toISOString(),database:db},null,2),blob=new Blob([text],{type:'application/json'}),u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='copia-chuletonbet.json';a.click();setTimeout(function(){URL.revokeObjectURL(u);},1000);return;}
@@ -1172,19 +1262,19 @@ app.addEventListener('click',function(event){
   if(action==='remove'){draft.splice(Number(t.dataset.index),1);render();return;}
   if(action==='reset'){draft=((data.submissions[selectedPlayer]||{}).picks||[]).slice();render();return;}
   if(action==='submit'){
-    if(draft.length!==4)return;
-    requirePin(function(secret){post('/api/submission',{week:week,player:selectedPlayer,pin:secret,picks:draft});});return;
+    if(!data.publication.open||draft.length!==4)return;
+    requirePin(function(secret){post('/api/submission',{week:week,competition:competition,player:selectedPlayer,pin:secret,picks:draft});});return;
   }
   if(action==='vote-toggle'){if(!selectedPlayer){notify('Selecciona tu nombre para votar.','error');return;}toggleVote(t.dataset.id,'ballot');return;}
   if(action==='submit-vote'){
-    requirePin(function(secret){post('/api/vote',{week:week,player:selectedPlayer,pin:secret,ids:ballot});});return;
+    requirePin(function(secret){post('/api/vote',{week:week,competition:competition,player:selectedPlayer,pin:secret,ids:ballot});});return;
   }
-  if(action==='fix-auto'){if(!data.consensus.complete||data.consensus.fixed)return;post('/api/fix',{week:week,ids:data.consensus.selected.slice()});return;}
+  if(action==='fix-auto'){if(!data.publication.open||!data.consensus.complete||data.consensus.fixed)return;post('/api/fix',{week:week,competition:competition,ids:data.consensus.selected.slice()});return;}
   if(action==='manual-mode'){manual=(data.consensus.selected||[]).slice();modal=true;render();return;}
   if(action==='manual-toggle'){toggleVote(t.dataset.id,'manual');return;}
   if(action==='close-modal'){modal=false;render();return;}
-  if(action==='submit-fix'){if(manual.length===4){modal=false;post('/api/fix',{week:week,adminPin:adminPin,ids:manual});}return;}
-  if(action==='unfix'){if(!confirm('¿Desfijar esta combinada? Se quitará del historial hasta que se vuelva a fijar.'))return;modal=false;post('/api/unfix',{week:week,adminPin:adminPin});return;}
+  if(action==='submit-fix'){if(data.publication.open&&manual.length===4){modal=false;post('/api/fix',{week:week,competition:competition,adminPin:adminPin,ids:manual});}return;}
+  if(action==='unfix'){if(!confirm('¿Desfijar esta combinada? Se quitará del historial hasta que se vuelva a fijar.'))return;modal=false;post('/api/unfix',{week:week,competition:competition,adminPin:adminPin});return;}
 });
 load();
 // El HTML funciona al instante, incluso sin internet; la consulta remota va en paralelo.
@@ -1193,7 +1283,7 @@ setInterval(function(){if(document.visibilityState==='visible'&&!busy&&data){
   // Actualizar datos públicos en segundo plano; conservar el borrador y la papeleta del usuario.
   if(Date.now()-(remote.updatedAt||0)>12*60000)refreshSource(false);
   refreshResults(false);
-  request('/api/state?week='+encodeURIComponent(week)).then(function(fresh){data=fresh;render();}).catch(function(){/* Sin conexión: conservar vista previa. */});
+  request('/api/state?week='+encodeURIComponent(week)+'&competition='+encodeURIComponent(competition)).then(function(fresh){data=fresh;render();}).catch(function(){/* Sin conexión: conservar vista previa. */});
 }},120000);
 })();
 </script>
