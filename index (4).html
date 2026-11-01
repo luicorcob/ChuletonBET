@@ -1,0 +1,1299 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#7B112C">
+<title>ChuletonBet · La peña del fútbol, vino y chuletón</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=DM+Sans:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&family=Bree+Serif&display=swap');
+:root { color-scheme: dark; --bg:#081426;--surface:#101f34;--surface2:#15283e;--line:#263c55;--fg:#ecf3f9;--muted:#90a5bc;--lime:#c5ff69;--blue:#7fb8ff;--amber:#ffd28a;--red:#ff9d9b; }
+* { box-sizing:border-box; }
+html {scroll-behavior:smooth;}
+body {margin:0; color:var(--fg);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:radial-gradient(ellipse 80% 42% at 90% -5%,#17456a88,transparent 78%),radial-gradient(ellipse 65% 35% at 0% 8%,#174a4b60,transparent 75%),var(--bg);min-height:100vh;}
+button,input,select {font:inherit;}
+button {cursor:pointer;}
+button:disabled {opacity:.4;cursor:not-allowed;}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--lime);outline-offset:3px;}
+.container {max-width:1220px;margin:auto;padding:0 22px;}
+.top {border-bottom:1px solid #ffffff10;background:#0814266f;backdrop-filter:blur(22px);}
+.top-inner {display:flex;justify-content:space-between;align-items:center;gap:16px;min-height:85px;}
+.logo {display:flex;align-items:center;gap:13px;color:var(--fg);text-decoration:none;}
+.logo-mark {display:grid;place-items:center;width:43px;height:43px;background:var(--lime);color:#062119;border-radius:14px;font-size:24px;box-shadow:0 4px 30px #b7f86635;}
+.logo-title {display:block;font-weight:900;letter-spacing:-.6px;font-size:17px;line-height:1.1;}
+.logo-sub {display:block;color:var(--muted);font-size:11px;font-weight:700;letter-spacing:1.6px;margin-top:5px;text-transform:uppercase;}
+.session {display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.player-select {border:1px solid var(--line);background:#162940;color:var(--fg);border-radius:12px;min-height:43px;padding:0 14px;font-size:13px;max-width:150px;}
+.pill {border:1px solid var(--line);background:#172a3c;color:var(--muted);padding:9px 13px;border-radius:50px;font-size:12px;font-weight:700;}
+.pill.light {background:#c5ff691c;border-color:#c5ff6960;color:var(--lime);}
+.hero {padding:43px 0 28px;display:flex;justify-content:space-between;align-items:flex-end;gap:20px;}
+.eyebrow {color:var(--lime);font-size:11px;letter-spacing:2.2px;font-weight:800;text-transform:uppercase;display:flex;align-items:center;gap:10px;}
+.eyebrow:before {content:"";height:7px;width:7px;border-radius:100%;background:var(--lime);box-shadow:0 0 12px #baff6a;}
+h1 {margin:12px 0 12px;font-size:clamp(37px,5.2vw,66px);line-height:1.03;letter-spacing:-2.7px;font-weight:900;}
+h1 em {font-style:normal;color:var(--lime);}
+.hero p {max-width:630px;color:var(--muted);margin:0;line-height:1.6;font-size:14px;}
+.week-tools {display:flex;align-items:center;gap:10px;background:#0d2136;border:1px solid var(--line);border-radius:16px;padding:7px;white-space:nowrap;}
+.week-tools span {font-size:12px;font-weight:800;text-align:center;min-width:148px;}
+.square {background:#1d344c;border:1px solid #315069;border-radius:11px;color:white;width:35px;height:35px;font-size:22px;display:grid;place-items:center;}
+.grid-metrics {display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin:10px 0 23px;}
+.metric {background:linear-gradient(125deg,#14273b,#101d30);border:1px solid var(--line);border-radius:18px;padding:20px 19px;min-height:117px;}
+.metric .k {font-size:12px;color:var(--muted);font-weight:650;}
+.metric .v {font-size:34px;letter-spacing:-1px;font-weight:900;margin-top:12px;line-height:1;}
+.metric .v small {font-size:14px;color:var(--muted);letter-spacing:0;font-weight:700;}
+.metric.accent {background:linear-gradient(125deg,#d8ff80,#aaf36c);color:#14241a;border-color:#d8ff80;}
+.metric.accent .k,.metric.accent .v small {color:#2e4a35;}
+.alert {border:1px solid #9b623f8a;background:#3b2a274d;color:#f7dbb9;border-radius:13px;padding:12px 15px;font-size:13px;line-height:1.5;margin:0 0 14px;}
+.alert.warn {border-color:#685b44;background:#29271f;color:#d7c3a6;}
+.alert.success {border-color:#517953;background:#153b2d;color:#bfffab;}
+.main-card {border:1px solid var(--line);border-radius:23px;background:#102037b0;overflow:hidden;box-shadow:0 14px 50px #00000012;}
+.nav {display:flex;gap:6px;padding:10px;border-bottom:1px solid var(--line);overflow:auto;}
+.nav button {flex:1;border:0;border-radius:12px;padding:13px 13px;background:transparent;color:#9db1c5;font-size:13px;font-weight:750;white-space:nowrap;}
+.nav button.active {background:#c5ff6918;color:var(--lime);}
+.nav button .bubble {border-radius:30px;background:#24435c;padding:3px 7px;margin-left:6px;font-size:11px;}
+.content {padding:26px;}
+.panel-heading {display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:21px;}
+h2 {font-size:21px;letter-spacing:-.5px;margin:0;font-weight:850;}
+.description {color:var(--muted);font-size:13px;line-height:1.6;margin:7px 0 0;}
+.btn {border:1px solid var(--line);border-radius:12px;background:#1c354b;color:var(--fg);font-size:13px;font-weight:800;padding:12px 16px;white-space:nowrap;transition:transform .12s,background .15s;}
+.btn:not(:disabled):hover {transform:translateY(-1px);background:#29445d;}
+.btn.primary {border-color:var(--lime);background:var(--lime);color:#122415;}
+.btn.primary:hover {background:#d4ff92;}
+.btn.ghost {background:transparent;}
+.btn.small {font-size:11px;padding:8px 10px;border-radius:9px;}
+.btn.danger {border-color:#7e3c41;color:var(--red);background:#4b252a;}
+.draft-layout {display:grid;grid-template-columns:minmax(0,1.45fr) minmax(310px,.8fr);gap:21px;align-items:start;}
+.fixtures-wrap {min-width:0;}
+.filterbar {display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:16px;}
+.filter {border:1px solid var(--line);background:#0b1b2e;border-radius:11px;color:var(--fg);padding:11px 12px;flex:1;min-width:145px;font-size:13px;}
+.filter-label {font-size:12px;color:var(--muted);}
+.chips {display:flex;gap:6px;flex-wrap:wrap;}
+.chip {border:1px solid var(--line);background:#162b41;color:var(--muted);border-radius:25px;padding:8px 11px;font-size:11px;font-weight:800;}
+.chip.on {border-color:#a6e86c99;color:var(--lime);background:#b7ff621a;}
+.match {border:1px solid var(--line);border-radius:15px;background:#12263b;margin-bottom:11px;padding:15px;transition:border-color .15s;}
+.match:hover {border-color:#47617c;}
+.match.used {border-color:#a7e76a72;}
+.match-top {display:flex;justify-content:space-between;align-items:center;gap:12px;color:var(--muted);font-size:11px;font-weight:700;margin-bottom:13px;}
+.match-teams {display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:15px;}
+.team {display:flex;align-items:center;gap:8px;min-width:0;flex:1;}
+.team:last-child {text-align:right;justify-content:flex-end;}
+.team img {height:26px;width:26px;object-fit:contain;flex-shrink:0;}
+.team span {font-size:14px;font-weight:820;line-height:1.25;}
+.vs {color:#6c88a2;font-size:10px;font-weight:900;letter-spacing:1px;padding:0 7px;}
+.market-row {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;}
+.market-btn {background:#1b334a;color:#d4e4f3;border:1px solid #304c66;border-radius:9px;padding:9px 3px;font-size:10px;min-width:0;line-height:1.5;}
+.market-btn strong {display:block;font-size:13px;}
+.market-btn.chosen {background:#c5ff69;color:#15311b;border-color:#c5ff69;}
+.market-btn.missing strong {color:#708a9d;}
+.market-btn:disabled {opacity:.48;}
+.draft-sidebar {position:sticky;top:14px;border:1px solid var(--line);background:#0b192c;border-radius:18px;padding:19px;}
+.sidebar-top {display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:18px;}
+.sidebar-top h3 {margin:0;font-size:17px;}
+.counter {font-size:12px;font-weight:800;color:var(--lime);}
+.slot {display:flex;align-items:center;gap:10px;border:1px dashed #37516a;border-radius:12px;min-height:65px;padding:11px 10px;margin-bottom:9px;}
+.slot.filled {border-style:solid;background:#172c40;}
+.slot-num {display:grid;place-items:center;height:26px;width:26px;border-radius:9px;background:#26415b;color:var(--muted);font-size:11px;font-weight:900;flex-shrink:0;}
+.slot .slot-info {flex:1;min-width:0;}
+.slot strong {font-size:12px;display:block;line-height:1.25;}
+.slot small {font-size:11px;color:var(--muted);display:block;margin-top:4px;line-height:1.4;}
+.slot .price {font-size:14px;font-weight:900;color:var(--lime);white-space:nowrap;}
+.slot .remove {background:transparent;color:var(--muted);border:0;padding:4px 3px;font-size:19px;}
+.combined {border:1px solid #c5ff6960;background:linear-gradient(140deg,#1d4a3a,#132b34);border-radius:14px;padding:19px;margin-top:17px;}
+.combined small {color:#b3d4c0;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;}
+.combined b {display:block;color:var(--lime);font-size:38px;letter-spacing:-1px;margin-top:4px;}
+.combined p {color:#b9cbbb;font-size:11px;line-height:1.5;margin:5px 0 0;}
+.side-actions {margin-top:13px;display:grid;gap:9px;}
+.note {font-size:11px;color:var(--muted);line-height:1.5;margin:9px 0 0;}
+.legend {font-size:11px;color:var(--muted);margin-bottom:14px;}
+.empty {border:1px dashed #34516b;border-radius:15px;padding:36px;text-align:center;color:var(--muted);font-size:13px;line-height:1.7;}
+.empty .emoji {font-size:32px;margin-bottom:8px;}
+.rank-list {display:grid;gap:9px;}
+.rank-row {display:flex;align-items:center;gap:15px;background:#13283d;border:1px solid var(--line);border-radius:13px;padding:13px 15px;}
+.rank-num {display:grid;place-items:center;flex-shrink:0;width:31px;height:31px;border-radius:11px;background:#243e55;color:#bdcddd;font-weight:900;font-size:13px;}
+.rank-row.top {border-color:#b8f76b72;background:linear-gradient(90deg,#26463a,#142b3a);}
+.rank-row.top .rank-num {background:var(--lime);color:#162913;}
+.rank-body {flex:1;min-width:0;}
+.rank-body strong {font-size:13px;display:block;}
+.rank-body small {display:block;font-size:11px;color:var(--muted);margin-top:5px;line-height:1.45;}
+.rank-points {display:flex;align-items:center;gap:11px;flex-shrink:0;}
+.rank-stat {text-align:center;min-width:36px;}
+.rank-stat b {font-size:17px;display:block;}
+.rank-stat span {font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;}
+.status-chip {display:inline-block;border-radius:7px;background:#c5ff6921;color:var(--lime);padding:4px 7px;margin-left:4px;font-size:10px;font-weight:800;}
+.status-chip.wait {background:#ffd28a21;color:var(--amber);}
+.two-col {display:grid;grid-template-columns:1.15fr .85fr;gap:20px;align-items:start;}
+.vote-choice {border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:9px;background:#14283b;display:flex;gap:12px;align-items:center;}
+.vote-choice .check {height:25px;width:25px;border-radius:9px;border:2px solid #55708c;background:#21384b;display:grid;place-items:center;font-size:15px;color:#09261c;flex-shrink:0;}
+.vote-choice.selected {border-color:#b8f76b7a;background:#1e423a;}
+.vote-choice.selected .check {background:var(--lime);border-color:var(--lime);}
+.vote-choice .body {flex:1;min-width:0;}
+.vote-choice b {display:block;font-size:12px;line-height:1.4;}
+.vote-choice small {display:block;font-size:11px;margin-top:4px;color:var(--muted);}
+.vote-choice .count {font-size:13px;font-weight:900;color:var(--lime);white-space:nowrap;}
+.vote-choice button {border:0;background:none;color:inherit;text-align:left;width:100%;display:flex;align-items:center;gap:12px;padding:0;}
+.block {border:1px solid var(--line);background:#102237;border-radius:17px;padding:20px;}
+.block h3 {margin:0 0 10px;font-size:16px;}
+.block p {color:var(--muted);font-size:12px;line-height:1.6;margin:7px 0 16px;}
+.final-item {display:flex;gap:10px;align-items:center;border-bottom:1px solid #2b4659;padding:11px 0;}
+.final-item:last-of-type{border-bottom:0;}
+.final-item .n {display:grid;place-items:center;flex-shrink:0;width:25px;height:25px;border:1px solid #a4d762;border-radius:7px;color:var(--lime);font-size:12px;font-weight:900;}
+.final-item .detail {flex:1;min-width:0;}
+.final-item .detail strong {display:block;font-size:12px;}
+.final-item .detail small {font-size:11px;color:var(--muted);}
+.final-item .p {color:var(--lime);font-size:14px;font-weight:800;}
+.final-total {display:flex;align-items:center;justify-content:space-between;color:var(--muted);margin-top:15px;padding-top:12px;border-top:1px solid var(--line);font-size:12px;}
+.final-total b {color:var(--lime);font-size:26px;}
+.people {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;}
+.person {border:1px solid var(--line);border-radius:16px;background:#14283e;padding:17px;}
+.person-title {display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px;}
+.avatar {display:grid;place-items:center;width:33px;height:33px;border-radius:12px;background:#2a5164;color:var(--lime);font-weight:900;}
+.person-title b {margin-right:auto;font-size:14px;}
+.person-row {display:flex;justify-content:space-between;gap:9px;align-items:flex-start;padding:8px 0;border-top:1px solid #274057;font-size:11px;line-height:1.5;}
+.person-row .price {color:var(--lime);font-weight:900;white-space:nowrap;}
+.person-row strong {display:block;font-size:11px;}
+.person-row span {color:var(--muted);}
+.person-total {font-size:11px;color:var(--muted);padding-top:12px;}
+.person-total b {font-size:20px;color:var(--lime);margin-left:7px;}
+.league-groups {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;}
+.team-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+.team-tile {border:1px solid var(--line);background:#14293d;border-radius:11px;display:flex;align-items:center;gap:10px;padding:10px;font-size:12px;font-weight:750;min-height:55px;}
+.team-tile img {width:28px;height:28px;object-fit:contain;}
+.footer {padding:27px 0 38px;display:flex;align-items:center;justify-content:space-between;gap:15px;color:#718ba4;font-size:11px;line-height:1.5;}
+.overlay {position:fixed;inset:0;background:#04101acb;backdrop-filter:blur(5px);display:grid;place-items:center;z-index:10;padding:16px;}
+.modal {background:#15283b;border:1px solid #45617a;border-radius:20px;padding:26px;max-width:410px;width:100%;box-shadow:0 20px 100px #0008;}
+.modal h2 {margin-bottom:6px;}
+.modal p {font-size:13px;color:var(--muted);line-height:1.6;}
+.modal input {width:100%;background:#0b1b2e;border:1px solid #466077;border-radius:10px;color:white;padding:12px;margin:8px 0 14px;}
+.modal-actions {display:flex;gap:10px;}
+.spin {display:inline-block;width:23px;height:23px;border:3px solid #567389;border-top-color:var(--lime);border-radius:50%;animation:spin 1s linear infinite;}
+@keyframes spin {to {transform:rotate(360deg);}}
+@media(max-width:950px){.draft-layout,.two-col,.league-groups{grid-template-columns:1fr}.draft-sidebar{position:static}.hero{align-items:flex-start;flex-direction:column}.grid-metrics{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.container{padding:0 13px}.hero{padding:28px 2px 22px}h1{letter-spacing:-1.9px}.top-inner{min-height:75px}.pill.desktop{display:none}.logo-sub{font-size:9px}.logo-title{font-size:14px}.logo-mark{height:38px;width:38px}.content{padding:15px}.nav{padding:7px}.nav button{padding:12px 11px;font-size:11px}.grid-metrics{gap:8px}.metric{padding:14px;min-height:100px}.metric .v{font-size:29px}.market-row{gap:4px}.market-btn{font-size:9px}.market-btn strong{font-size:12px}.people{grid-template-columns:1fr}.team-grid{grid-template-columns:1fr}.team span{font-size:12px}.week-tools span{min-width:135px}.rank-row{padding:11px 10px;gap:10px}.rank-points{gap:6px}.footer{flex-direction:column;align-items:flex-start}.player-select{max-width:112px}.panel-heading{align-items:flex-start;flex-direction:column}}
+/* ════════════════════════════════════════════════════════════════════
+   EL TEMPLO DE LA PORRA — 1999 DELUXE
+   Sistema visual unificado: color, texturas, sombras, tipografía y motion
+   ════════════════════════════════════════════════════════════════════ */
+:root {
+  color-scheme:light;
+  --wine:#7B112C; --grass:#168B45; --gold:#FFD431; --pink:#FF42AC;
+  --cream:#FFF0CF; --ink:#181313; --blue90:#2455FF; --fire:#FF682D;
+  --paper:#FFF9E8; --darkwine:#45071B; --white:#FFFFFF;
+  --display:'Archivo Black',Impact,'Arial Black',sans-serif;
+  --pixel:'Space Mono','Courier New',monospace;
+  --serif:'Bree Serif',Georgia,serif;
+  --body:'DM Sans',system-ui,sans-serif;
+  --hard:5px 5px 0 var(--ink); --hard-sm:3px 3px 0 var(--ink);
+  --bg:var(--cream); --surface:var(--paper); --surface2:#fff7e3;
+  --line:var(--ink); --fg:var(--ink); --muted:#634d42;
+  --lime:var(--gold); --blue:var(--blue90); --amber:#915114; --red:#A42533;
+}
+html {scroll-behavior:smooth;}
+body {
+  color:var(--ink);font-family:var(--body);min-height:100vh;
+  background-color:var(--cream);
+  background-image:
+    radial-gradient(circle at 15% 12%,#ff42ac22 0 6%,transparent 6.2%),
+    radial-gradient(circle at 83% 36%,#ffd43155 0 8%,transparent 8.1%),
+    repeating-linear-gradient(0deg,transparent 0 27px,#7b112c09 27px 28px),
+    repeating-linear-gradient(90deg,transparent 0 27px,#7b112c09 27px 28px);
+  background-size:auto,auto,28px 28px,28px 28px;
+}
+button,input,select {font-family:var(--body);}
+button:focus-visible,input:focus-visible,select:focus-visible {outline:4px solid var(--blue90);outline-offset:3px;}
+button:active:not(:disabled) {transform:translate(2px,2px)!important;box-shadow:1px 1px 0 var(--ink)!important;}
+button:disabled {opacity:.48;filter:grayscale(.4);}
+.container {max-width:1310px;}
+.retro-strip {background:var(--gold);color:var(--ink);border-bottom:3px solid var(--ink);font:700 10px var(--pixel);letter-spacing:.06em;}
+.strip-inner {display:flex;align-items:center;justify-content:space-between;gap:14px;padding-top:7px;padding-bottom:7px;}
+.strip-blink {background:var(--grass);color:#fff;border:2px solid var(--ink);padding:2px 8px;animation:blink-lite 1.3s steps(2,end) infinite;}
+@keyframes blink-lite{50%{opacity:.65}}
+.top {background:var(--wine);border-bottom:5px solid var(--ink);box-shadow:0 5px 0 var(--gold);backdrop-filter:none;position:relative;z-index:2;}
+.top-inner {min-height:98px;gap:18px;}
+.logo {gap:14px;min-width:0;color:#fff;}
+.logo-mark {position:relative;width:67px;height:67px;background:var(--gold);border:3px solid var(--ink);border-radius:5px;box-shadow:var(--hard);transform:rotate(-6deg);font-size:38px;line-height:1;}
+.logo-mark small {position:absolute;bottom:-9px;right:-17px;background:var(--pink);border:2px solid var(--ink);padding:2px 5px;font:700 9px var(--pixel);transform:rotate(6deg);white-space:nowrap;}
+.logo-title {color:var(--cream);font:normal clamp(17px,2.1vw,26px)/1.05 var(--display);letter-spacing:-.045em;text-shadow:3px 3px 0 var(--ink);}
+.logo-title i {font-style:normal;color:var(--gold);}
+.logo-sub {color:#ffdfbd;font:700 9px var(--pixel);letter-spacing:.05em;margin-top:10px;}
+.session {justify-content:flex-end;gap:10px;}
+.pill {background:var(--gold);border:2px solid var(--ink);border-radius:2px;color:var(--ink);box-shadow:var(--hard-sm);font:700 10px var(--pixel);padding:9px 12px;}
+.pill.light {background:var(--pink);border-color:var(--ink);color:var(--ink);}
+.player-label {display:flex;flex-direction:column;gap:4px;color:var(--cream);font:700 10px var(--pixel);letter-spacing:.06em;}
+.player-select {background:var(--cream);color:var(--ink);border:3px solid var(--ink);border-radius:4px;box-shadow:3px 3px 0 var(--ink);font-weight:900;min-height:43px;max-width:172px;}
+.cash-shortcut {display:flex;align-items:center;gap:9px;background:var(--pink);color:var(--ink);border:3px solid var(--ink);border-radius:3px;padding:11px 14px;box-shadow:var(--hard-sm);font:700 12px var(--pixel);transform:rotate(-2deg);}
+.cash-shortcut span {background:var(--ink);color:var(--gold);padding:4px 7px;font:700 11px var(--pixel);}
+.cash-shortcut:hover {background:var(--gold);transform:rotate(1deg) translateY(-2px);}
+.hero {position:relative;isolation:isolate;overflow:hidden;min-height:386px;margin-top:28px;padding:34px 38px 28px;background:var(--grass);border:5px solid var(--ink);box-shadow:9px 9px 0 var(--ink);color:#fff;align-items:stretch;gap:22px;}
+.hero:before {content:'';position:absolute;z-index:-1;inset:0;pointer-events:none;background:repeating-linear-gradient(90deg,transparent 0 105px,#ffffff12 105px 210px),radial-gradient(circle at 100% 0%,#ffffff30,transparent 53%);}
+.hero:after {content:'';position:absolute;z-index:-1;inset:9px;border:2px dashed #ffffff90;pointer-events:none;}
+.hero-copy {position:relative;z-index:1;max-width:690px;flex:1;}
+.eyebrow {display:inline-block;background:var(--gold);color:var(--ink);padding:7px 13px;border:2px solid var(--ink);box-shadow:4px 4px 0 var(--ink);font:700 10px var(--pixel);letter-spacing:.03em;transform:rotate(-2deg);}
+.eyebrow:before {display:none;}
+h1 {font:normal clamp(52px,7.3vw,109px)/.87 var(--display);letter-spacing:-.065em;margin:27px 0 20px;color:var(--cream);-webkit-text-stroke:2px var(--ink);paint-order:stroke fill;text-shadow:6px 7px 0 var(--ink);}
+h1 em {font-style:normal;color:var(--gold);}
+h1 em span {color:var(--pink);}
+.hero p {color:#fffce9;font-size:14px;line-height:1.65;font-weight:800;max-width:560px;}
+.hero-tags {display:flex;gap:8px;flex-wrap:wrap;margin-top:22px;}
+.hero-tags span {background:var(--cream);border:2px solid var(--ink);color:var(--ink);padding:7px 11px;font:700 10px var(--pixel);box-shadow:3px 3px 0 var(--ink);}
+.hero-tags span:nth-child(2) {background:var(--pink);transform:rotate(-2deg);}
+.hero-tags span:nth-child(3) {background:var(--gold);transform:rotate(2deg);}
+.hero-aside {display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;min-width:280px;}
+.sticker-collage {position:relative;width:302px;height:226px;pointer-events:none;}
+.sticker {position:absolute;display:grid;place-items:center;background:var(--cream);border:4px solid var(--ink);box-shadow:6px 6px 0 var(--ink);border-radius:50%;text-shadow:1px 3px 0 #18131330;transition:transform .2s;}
+.sticker-ball {left:21px;top:16px;width:130px;height:130px;font-size:86px;transform:rotate(-14deg);animation:floatball 3.1s ease-in-out infinite;}
+.sticker-wine {left:141px;top:0;width:114px;height:114px;background:var(--pink);font-size:76px;transform:rotate(15deg);}
+.sticker-steak {left:144px;top:112px;width:114px;height:91px;border-radius:17px;background:var(--gold);font-size:64px;transform:rotate(-15deg);}
+.sticker-star {left:12px;top:146px;width:68px;height:68px;font-size:42px;background:var(--fire);color:var(--gold);transform:rotate(12deg);}
+.sticker-caption {position:absolute;right:8px;bottom:-3px;background:var(--wine);color:var(--cream);border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);font:700 10px/1.5 var(--pixel);padding:8px 12px;transform:rotate(5deg);text-align:center;}
+@keyframes floatball {0%,100%{transform:translateY(0) rotate(-14deg)}50%{transform:translateY(-10px) rotate(-9deg)}}
+.week-tools {display:flex;align-items:center;justify-content:center;gap:8px;background:var(--cream);border:3px solid var(--ink);border-radius:3px;padding:6px;box-shadow:var(--hard);color:var(--ink);}
+.week-tools span {font:700 11px var(--pixel);min-width:160px;white-space:normal;line-height:1.4;}
+.square {background:var(--gold);border:2px solid var(--ink);border-radius:2px;color:var(--ink);width:39px;height:39px;font-size:26px;font-weight:900;box-shadow:2px 2px 0 var(--ink);}
+.square:hover {background:var(--pink);}
+.ticker {overflow:hidden;border:3px solid var(--ink);background:var(--wine);color:var(--gold);margin:21px 0 15px;box-shadow:4px 4px 0 var(--ink);white-space:nowrap;}
+.ticker-track {width:max-content;padding:9px 10px;font:700 12px var(--pixel);letter-spacing:.075em;animation:ticker-scroll 28s linear infinite;}
+@keyframes ticker-scroll{to{transform:translateX(-47%)}}
+.grid-metrics {gap:14px;margin:20px 0 29px;}
+.metric {position:relative;min-width:0;min-height:138px;padding:18px;background:var(--gold);color:var(--ink);border:3px solid var(--ink);border-radius:3px;box-shadow:var(--hard);transform:rotate(-1deg);}
+.metric:nth-child(2){background:var(--pink);transform:rotate(1deg)}
+.metric:nth-child(3){background:var(--blue90);color:white;transform:rotate(-.6deg)}
+.metric.accent {background:var(--wine);color:var(--cream);border-color:var(--ink);transform:rotate(1deg)}
+.metric .k {font:700 10px/1.4 var(--pixel);color:inherit;text-transform:uppercase;}
+.metric .v {font:normal clamp(26px,3.7vw,47px)/1 var(--display);color:inherit;letter-spacing:-.05em;margin-top:19px;text-shadow:2px 2px 0 #0000001c;overflow-wrap:anywhere;}
+.metric .v small,.metric.accent .k,.metric.accent .v small {font:700 11px var(--pixel);color:inherit;}
+.metric:after {content:'✦';position:absolute;right:12px;bottom:7px;font:28px var(--serif);opacity:.36;}
+.alert {border:3px solid var(--ink);border-radius:3px;color:var(--ink);background:#FFE0B0;box-shadow:var(--hard-sm);font-weight:700;margin:0 0 15px;}
+.alert.warn {background:#FFDFB5;border-color:var(--ink);color:#54250F;}
+.alert.success {background:#C6F3B9;border-color:var(--ink);color:#123F1E;}
+.legend {font:600 11px/1.6 var(--body);color:var(--muted);margin:18px 0;}
+.main-card {background:var(--paper);border:4px solid var(--ink);border-radius:4px;box-shadow:9px 9px 0 var(--ink);overflow:visible;}
+.nav {background:var(--wine);border-bottom:4px solid var(--ink);padding:10px;gap:9px;flex-wrap:nowrap;scrollbar-width:thin;}
+.nav button {flex:1;min-width:max-content;background:var(--cream);color:var(--ink);border:2px solid var(--ink);border-radius:2px;padding:13px 14px;box-shadow:3px 3px 0 var(--ink);font:800 12px var(--body);transition:transform .12s,background .12s;}
+.nav button:hover {background:var(--gold);transform:translateY(-3px);}
+.nav button.active {background:var(--gold);color:var(--ink);box-shadow:inset 2px 2px 0 #ffffffaa,3px 3px 0 var(--ink);}
+.nav button[data-tab='cash'] {background:var(--pink);}
+.nav button[data-tab='cash'].active {background:var(--gold);}
+.nav button .bubble {background:var(--ink);color:var(--gold);border-radius:2px;}
+.content {padding:30px;background:radial-gradient(circle at 100% 0,#ff42ac16,transparent 42%),var(--paper);min-height:280px;}
+h2 {font:normal clamp(21px,2.8vw,32px)/1.17 var(--display);color:var(--wine);letter-spacing:-.045em;text-transform:uppercase;text-shadow:2px 2px 0 #ffd4318c;}
+.description {color:var(--muted);font-size:13px;font-weight:650;line-height:1.6;}
+.panel-heading {border-bottom:3px dashed var(--wine);padding-bottom:17px;margin-bottom:23px;}
+.btn {background:var(--cream);border:3px solid var(--ink);color:var(--ink);border-radius:3px;box-shadow:var(--hard-sm);font:800 12px var(--pixel);padding:12px 16px;white-space:normal;transition:transform .14s,background .14s;}
+.btn:not(:disabled):hover {transform:translateY(-3px) rotate(-1deg);background:var(--pink);}
+.btn.primary {background:var(--gold);border-color:var(--ink);color:var(--ink);}
+.btn.primary:hover {background:var(--pink);}
+.btn.ghost {background:var(--paper);}
+.btn.small {border-radius:2px;}
+.btn.danger {background:#FFD8D0;color:var(--wine);border-color:var(--ink);}
+.filter {background:white;border:3px solid var(--ink);border-radius:3px;color:var(--ink);box-shadow:var(--hard-sm);padding:12px;}
+.chip {background:var(--cream);border:2px solid var(--ink);border-radius:3px;color:var(--ink);box-shadow:2px 2px 0 var(--ink);font:700 10px var(--pixel);}
+.chip.on {background:var(--grass);color:white;border-color:var(--ink);}
+.match {position:relative;background:#fffdf5;border:3px solid var(--ink);border-radius:3px;box-shadow:var(--hard-sm);padding:16px;margin-bottom:16px;}
+.match:before {content:'✦';position:absolute;top:-11px;left:18px;display:grid;place-items:center;width:21px;height:21px;background:var(--gold);border:2px solid var(--ink);border-radius:50%;font-size:14px;}
+.match:hover {border-color:var(--wine);transform:translateY(-1px);}
+.match.used {background:#E8FAD8;border-color:var(--grass);box-shadow:5px 5px 0 var(--ink);}
+.match-top {color:var(--wine);font:700 10px var(--pixel);gap:6px;flex-wrap:wrap;}
+.match-top span:first-child {background:var(--wine);color:white;padding:4px 6px;}
+.team span {color:var(--ink);font-size:13px;font-weight:900;}
+.team img {height:31px;width:31px;}
+.vs {background:var(--gold);border:2px solid var(--ink);padding:6px 7px;color:var(--ink);font:700 11px var(--pixel);transform:rotate(-9deg);}
+.market-btn {position:relative;background:var(--cream);color:var(--ink);border:2px solid var(--ink);border-radius:2px;box-shadow:2px 2px 0 var(--ink);font-size:10px;font-weight:900;line-height:1.45;padding:10px 2px;}
+.market-btn:hover:not(:disabled) {background:var(--pink);transform:translateY(-2px);}
+.market-btn strong {font:700 14px var(--pixel);color:var(--ink);}
+.market-btn.chosen {background:var(--grass);border-color:var(--ink);color:white;}
+.market-btn.chosen strong {color:var(--gold);}
+.market-btn.missing strong {color:#87736c;}
+.market-btn.chosen.missing strong {color:white;}
+.draft-sidebar {background:var(--wine);border:4px solid var(--ink);border-radius:3px;box-shadow:var(--hard);padding:19px;color:white;top:18px;}
+.draft-sidebar:before {content:'🎟 BOLETO OFICIAL';display:block;margin:-19px -19px 17px;padding:10px 14px;background:var(--gold);border-bottom:3px dashed var(--ink);color:var(--ink);font:700 12px var(--pixel);letter-spacing:.04em;}
+.sidebar-top h3 {font:normal 19px var(--display);color:var(--cream);}
+.counter {font:700 12px var(--pixel);color:var(--gold);}
+.slot {background:var(--cream);border:2px dashed var(--ink);border-radius:2px;color:var(--ink);}
+.slot.filled {background:white;border-style:solid;}
+.slot-num {background:var(--gold);color:var(--ink);border:2px solid var(--ink);border-radius:2px;font-family:var(--pixel);}
+.slot strong {color:var(--ink);font-weight:800;}
+.slot small {color:var(--muted);}
+.slot .price {color:var(--wine);font:700 13px var(--pixel);}
+.slot .remove {color:var(--wine);font-weight:900;font-size:25px;}
+.combined {background:var(--grass);border:3px solid var(--ink);border-radius:3px;box-shadow:var(--hard-sm);padding:16px;color:white;}
+.combined small {color:#fff;font:700 10px var(--pixel);}
+.combined b {color:var(--gold);font:normal clamp(26px,3vw,43px) var(--display);overflow-wrap:anywhere;}
+.combined p {color:#f0ffe4;font-weight:650;}
+.draft-sidebar .note {color:var(--cream);}
+.note {color:var(--muted);font-size:11px;line-height:1.6;}
+.empty {border:3px dashed var(--wine);border-radius:3px;background:#fff9e7;color:var(--muted);}
+.rank-row {background:#fffdf4;border:3px solid var(--ink);border-radius:2px;box-shadow:var(--hard-sm);margin-bottom:5px;}
+.rank-row.top {background:#DDFFD0;border-color:var(--ink);}
+.rank-num,.rank-row.top .rank-num {background:var(--gold);border:2px solid var(--ink);border-radius:2px;color:var(--ink);font:700 13px var(--pixel);}
+.rank-body strong {color:var(--ink);font-weight:900;}
+.rank-body small {color:var(--muted);}
+.rank-stat b {color:var(--wine);font:700 16px var(--pixel);}
+.rank-stat span {color:var(--muted);font:700 9px var(--pixel);}
+.status-chip {background:var(--grass);color:white;border:1px solid var(--ink);border-radius:2px;}
+.status-chip.wait {background:var(--gold);color:var(--ink);}
+.vote-choice {background:var(--cream);border:3px solid var(--ink);border-radius:3px;box-shadow:var(--hard-sm);}
+.vote-choice.selected {background:#DCF6CF;border-color:var(--grass);}
+.vote-choice .check {border:2px solid var(--ink);border-radius:2px;background:white;color:var(--ink);}
+.vote-choice.selected .check {background:var(--gold);border-color:var(--ink);}
+.vote-choice .body b {color:var(--ink);}
+.vote-choice .body small {color:var(--muted);}
+.vote-choice .count {color:var(--wine);font:700 11px var(--pixel);}
+.block {background:var(--cream);border:3px solid var(--ink);border-radius:3px;box-shadow:var(--hard-sm);}
+.block h3 {font:normal 18px var(--display);color:var(--wine);}
+.block p {color:var(--muted);font-size:12px;font-weight:650;}
+.final-item {border-color:#bd9e89;}
+.final-item .n {border:2px solid var(--ink);border-radius:2px;background:var(--gold);color:var(--ink);font-family:var(--pixel);}
+.final-item .detail strong {color:var(--ink);}
+.final-item .detail small {color:var(--muted);}
+.final-item .p {color:var(--wine);font:700 13px var(--pixel);}
+.final-total {color:var(--ink);border-top:3px dashed var(--wine);font-weight:800;}
+.final-total b {color:var(--wine);font:normal 27px var(--display);}
+.person {background:white;border:3px solid var(--ink);border-radius:3px;box-shadow:var(--hard-sm);}
+.person:nth-child(3n+2) {background:#FFF6D7;}
+.person-title b {color:var(--wine);font:normal 17px var(--display);}
+.avatar {background:var(--pink);border:2px solid var(--ink);border-radius:3px;color:var(--ink);box-shadow:2px 2px 0 var(--ink);}
+.person-row {border-color:#d8bfb2;color:var(--ink);}
+.person-row .price {color:var(--wine);font-family:var(--pixel);}
+.person-row span,.person-total {color:var(--muted);}
+.person-total b {color:var(--wine);font-family:var(--display);}
+.team-tile {background:white;border:2px solid var(--ink);border-radius:2px;color:var(--ink);box-shadow:2px 2px 0 var(--ink);}
+.team-tile:nth-child(even){background:#fff0c6;}
+.team-tile:hover {background:var(--gold);transform:rotate(-1deg) translateY(-2px);}
+.footer {color:var(--cream);background:var(--wine);max-width:none;padding:20px max(22px,calc((100% - 1266px)/2));margin-top:0;border-top:5px solid var(--ink);font:700 10px/1.6 var(--pixel);}
+.bottom-banner {display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;margin:42px auto 25px;padding:15px;font:normal clamp(13px,2vw,22px) var(--display);color:var(--wine);text-align:center;}
+.bottom-banner span {font-size:30px;filter:drop-shadow(2px 2px 0 var(--ink));}
+.overlay {background:#181313d9;backdrop-filter:blur(3px);}
+.modal {background:var(--cream);border:5px solid var(--ink);border-radius:3px;box-shadow:12px 12px 0 var(--pink);}
+.modal h2 {color:var(--wine);}
+.modal p {color:var(--muted);}
+.modal input {background:white;border:3px solid var(--ink);color:var(--ink);border-radius:2px;}
+.spin {border-color:var(--wine);border-top-color:var(--gold);}
+/* Caja: máquina tragaperras, marcador de estadio y ticket de carnicería vintage */
+.cash-heading {position:relative;}
+.cash-heading-actions {display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.cash-refresh {background:var(--cream);}
+.cash-stage {position:relative;isolation:isolate;overflow:hidden;text-align:center;background:var(--wine);color:var(--cream);border:6px solid var(--ink);box-shadow:9px 9px 0 var(--ink);padding:35px 18px 40px;}
+.cash-stage:before {content:'';position:absolute;z-index:-1;inset:0;background:radial-gradient(circle at 50% 0,#ff42ac55,transparent 50%),repeating-linear-gradient(90deg,#ffffff09 0 3px,transparent 3px 17px);}
+.cash-stage:after {content:'';position:absolute;inset:12px;border:2px dashed var(--gold);pointer-events:none;}
+.cash-bunting {display:inline-block;max-width:100%;background:var(--gold);color:var(--ink);border:3px solid var(--ink);padding:7px 15px;font:700 10px var(--pixel);box-shadow:4px 4px 0 var(--ink);transform:rotate(-2deg);}
+.cash-icons {display:flex;justify-content:center;gap:18px;font-size:45px;margin-top:13px;}
+.cash-icons span {display:inline-block;filter:drop-shadow(4px 4px 0 var(--ink));animation:cash-dance 3s ease-in-out infinite;}
+.cash-icons span:nth-child(2) {animation-delay:.2s;transform:rotate(-9deg)}
+.cash-icons span:nth-child(3) {animation-delay:.4s;}
+@keyframes cash-dance {50%{translate:0 -7px;rotate:5deg;}}
+.cash-overline {font:700 10px var(--pixel);letter-spacing:.07em;color:#ffe4c0;margin:17px 0 8px;}
+.cash-money {font:normal clamp(34px,8.5vw,112px)/1.15 var(--display);color:var(--gold);text-shadow:5px 6px 0 var(--ink);-webkit-text-stroke:1px var(--ink);overflow-wrap:anywhere;letter-spacing:-.05em;}
+.cash-underline {display:inline-block;padding:6px 15px;background:var(--grass);border:2px solid var(--ink);box-shadow:3px 3px 0 var(--ink);font:700 10px var(--pixel);margin-top:12px;}
+.cash-seal {position:absolute;right:22px;bottom:21px;width:77px;height:77px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:3px dashed var(--ink);border-radius:50%;background:var(--pink);color:var(--ink);font:normal 34px var(--display);transform:rotate(15deg);}
+.cash-seal small {font:700 8px/1.1 var(--pixel);}
+.cash-bottom {display:grid;grid-template-columns:minmax(0,1.15fr) minmax(275px,.85fr);gap:25px;align-items:start;margin-top:28px;}
+.cash-editor {background:var(--gold);padding:22px;}
+.cash-editor-top {display:flex;gap:13px;align-items:flex-start;}
+.cash-editor-top h3 {font-size:22px;margin-top:7px;}
+.cash-doodle {font-size:44px;filter:drop-shadow(3px 3px 0 #0002);}
+.cash-input-label {display:block;font:700 12px var(--pixel);margin:16px 0 10px;color:var(--wine);}
+.cash-form {display:flex;gap:12px;align-items:stretch;flex-wrap:wrap;}
+.cash-input-wrap {display:flex;align-items:center;gap:6px;background:white;border:4px solid var(--ink);box-shadow:var(--hard-sm);padding:0 14px;flex:1;min-width:150px;}
+.cash-input-wrap span {font:normal 31px var(--display);color:var(--wine);}
+.cash-input-wrap input {min-width:0;width:100%;border:0;background:white;color:var(--ink);padding:13px 4px;font:700 clamp(19px,2.4vw,28px) var(--pixel);outline-offset:0;}
+.cash-input-wrap input:focus-visible {outline:3px solid var(--blue90);}
+.cash-save {background:var(--pink)!important;min-height:64px;flex-grow:1;}
+.cash-editor .note {font-size:11px;color:#533619;margin-top:15px;}
+.cash-receipt {background:#fffdf4;border:3px solid var(--ink);padding:17px 22px 22px;box-shadow:5px 5px 0 var(--ink);position:relative;transform:rotate(1deg);}
+.cash-receipt:after {content:'';height:10px;position:absolute;left:0;right:0;bottom:-11px;background:linear-gradient(135deg,#fffdf4 25%,transparent 25%) -6px 0/12px 12px,linear-gradient(225deg,#fffdf4 25%,transparent 25%) -6px 0/12px 12px;}
+.receipt-head {font:700 9px var(--pixel);color:var(--wine);text-align:center;border-bottom:2px dashed var(--ink);padding-bottom:13px;}
+.receipt-icon {font-size:45px;text-align:center;margin-top:10px;}
+.cash-receipt h3 {font:normal 17px var(--serif);text-align:center;margin:6px 0 20px;}
+.receipt-row {display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px dashed #978a7e;font:700 10px var(--pixel);}
+.receipt-row strong {text-align:right;font:700 12px var(--body);overflow-wrap:anywhere;}
+.receipt-footer {text-align:center;color:var(--wine);font:700 11px/1.9 var(--pixel);margin-top:22px;}
+.receipt-footer small {font:700 8px var(--pixel);}
+/* Escalas y preferencias de accesibilidad */
+@media (hover:hover) { .sticker-collage:hover .sticker-ball {animation:none;transform:rotate(8deg) translateY(-7px);} .sticker-collage:hover .sticker-wine {transform:rotate(24deg) translateY(-8px);} }
+@media (max-width:1050px) {
+  .hero {padding:28px 25px;min-height:0;}
+  .hero-aside{min-width:225px;}
+  .sticker-collage {transform:scale(.8);transform-origin:top right;width:240px;height:200px;}
+  .nav button {font-size:11px;padding:11px 12px;}
+  .cash-shortcut span {display:none;}
+}
+@media (max-width:950px){
+  .hero {flex-direction:column;align-items:stretch;}
+  .hero-aside {flex-direction:row;align-items:center;min-width:0;gap:10px;}
+  .sticker-collage {height:100px;transform:scale(.56);transform-origin:top left;flex:0 0 155px;}
+  .week-tools {margin-left:auto;}
+  .cash-bottom {grid-template-columns:1fr;}
+}
+@media (max-width:680px) {
+  .retro-strip {font-size:8px;}
+  .strip-inner>span:nth-child(2){display:none;}
+  .top-inner {min-height:88px;flex-wrap:wrap;padding-top:12px;padding-bottom:14px;}
+  .logo-mark {width:46px;height:46px;font-size:28px;}
+  .logo-mark small {font-size:7px;right:-14px;bottom:-8px;}
+  .logo-title {font-size:19px;}
+  .logo-sub {font-size:8px;letter-spacing:0;}
+  .session{width:100%;justify-content:space-between;gap:12px;}
+  .player-label {flex:1;}
+  .player-select {max-width:none;width:100%;}
+  .cash-shortcut {padding:11px 12px;margin-top:14px;}
+  .hero {margin-top:20px;padding:28px 18px 21px;border-width:4px;box-shadow:5px 5px 0 var(--ink);}
+  .hero:after {inset:6px;}
+  h1 {font-size:clamp(49px,13.5vw,83px);-webkit-text-stroke:1px var(--ink);text-shadow:4px 5px 0 var(--ink);}
+  .eyebrow {font-size:8px;padding:7px;}
+  .hero p {font-size:12px;}
+  .hero-tags {gap:6px;}
+  .hero-tags span {font-size:8px;padding:6px 7px;}
+  .hero-aside {flex-wrap:wrap;gap:0;}
+  .sticker-collage {height:72px;flex-basis:108px;transform:scale(.42);}
+  .week-tools {margin-left:0;flex:1;min-width:0;}
+  .week-tools span {min-width:0;font-size:10px;}
+  .square {flex:0 0 32px;width:32px;height:35px;}
+  .ticker {margin-top:13px;}
+  .ticker-track {font-size:9px;}
+  .grid-metrics {grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;}
+  .metric {padding:13px;min-height:107px;box-shadow:3px 3px 0 var(--ink);}
+  .metric .k {font-size:9px;}
+  .metric .v {font-size:clamp(22px,7vw,34px);margin-top:15px;}
+  .metric .v small {font-size:9px;}
+  .main-card {border-width:3px;box-shadow:5px 5px 0 var(--ink);}
+  .nav {padding:8px;gap:7px;}
+  .nav button {flex:0 0 auto;padding:10px 12px;font-size:11px;}
+  .content {padding:17px 12px;}
+  .panel-heading {gap:10px;}
+  .rank-row {flex-wrap:wrap;gap:9px;}
+  .rank-points {width:100%;justify-content:flex-end;}
+  .market-btn {font-size:9px;padding:8px 1px;}
+  .market-btn strong {font-size:11px;}
+  .draft-sidebar {padding:14px;}
+  .draft-sidebar:before {margin:-14px -14px 15px;}
+  .cash-stage {padding:30px 10px 25px;border-width:4px;box-shadow:5px 5px 0 var(--ink);}
+  .cash-stage:after {inset:7px;}
+  .cash-icons {gap:10px;font-size:31px;}
+  .cash-bunting {font-size:8px;}
+  .cash-overline {font-size:8px;}
+  .cash-money {font-size:clamp(28px,9vw,55px);text-shadow:2px 3px 0 var(--ink);}
+  .cash-underline {font-size:8px;}
+  .cash-seal {position:static;margin:22px auto 0;width:60px;height:60px;font-size:24px;}
+  .cash-input-wrap input {font-size:22px;}
+  .cash-editor {padding:15px;}
+  .cash-editor-top h3 {font-size:17px;}
+  .footer {padding:22px 15px;}
+  .bottom-banner {font-size:13px;margin-top:30px;}
+  .bottom-banner span {font-size:22px;}
+}
+@media (prefers-reduced-motion:reduce) {
+  *,*:before,*:after {animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important;}
+}
+
+
+/* Funciones locales: cuotas manuales y creación de encuentros */
+.match-extras{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;border-top:2px dotted #bb9679;padding:9px 12px;background:#fff6e2;font-size:11px;font-weight:850;color:#6c3d42}
+.match-extras .btn{min-height:32px}
+.manual-add{margin:16px 0;border:4px ridge #e7ac4e;background:linear-gradient(130deg,#fff0cf,#ffe6a0)}
+.manual-add summary{cursor:pointer;font-weight:1000;font-size:16px;color:#7b112c;letter-spacing:.02em;list-style:revert}
+.manual-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:15px}
+.manual-form label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:900;text-transform:uppercase}
+.manual-form select,.manual-form input{min-width:0;width:100%;padding:10px;font:inherit;border:3px inset #b38f70;background:#fffdf3;border-radius:4px;color:#181313}
+.manual-form button{align-self:end}
+@media(max-width:680px){.manual-form{grid-template-columns:1fr}.match-extras{align-items:flex-start}}
+
+/* CHULETONBET v3 · Boleto protagonista y museo de quinielas */
+.logo-title {font-size:clamp(21px,2.5vw,30px);letter-spacing:-.06em;}
+.logo-title i {color:var(--gold);}
+.featured-ticket {margin-top:25px;margin-bottom:31px;}
+.group-ticket {position:relative;isolation:isolate;overflow:hidden;color:var(--ink);background:var(--cream);border:5px solid var(--ink);box-shadow:9px 9px 0 var(--ink);padding:22px 28px 25px;}
+.group-ticket:before {content:'';pointer-events:none;position:absolute;inset:0;z-index:-1;background:radial-gradient(circle at 96% 1%,#ff42ac32,transparent 35%),repeating-linear-gradient(90deg,transparent 0 24px,#7b112c08 25px 26px);}
+.featured-ticket {background:linear-gradient(115deg,#fff7db 0%,#ffe3a7 100%);}
+.group-ticket:after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:10px;background:linear-gradient(135deg,transparent 25%,var(--paper) 25%) 0 0/18px 18px,linear-gradient(225deg,transparent 25%,var(--paper) 25%) 0 0/18px 18px;pointer-events:none;}
+.ticket-topline {display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:3px dashed var(--wine);padding-bottom:10px;color:var(--wine);font:700 10px var(--pixel);}
+.ticket-stamp {background:var(--wine);color:var(--gold);border:2px solid var(--ink);box-shadow:3px 3px 0 var(--ink);padding:5px 9px;transform:rotate(3deg);white-space:nowrap;}
+.ticket-head {display:flex;justify-content:space-between;align-items:center;gap:20px;padding:24px 0 18px;}
+.ticket-kicker {font:700 11px var(--pixel);color:var(--wine);margin-bottom:9px;}
+.ticket-head h2 {margin:0;color:var(--wine);font:normal clamp(30px,4.8vw,64px)/1 var(--display);letter-spacing:-.06em;max-width:790px;text-shadow:3px 4px 0 var(--gold);}
+.ticket-head h2 em {font-style:normal;color:var(--grass);}
+.ticket-metadata {font-size:12px;font-weight:800;color:#6c3943;margin-top:11px;}
+.overall-stamp {flex:0 0 auto;max-width:235px;text-align:center;border:4px double var(--ink);box-shadow:4px 4px 0 var(--ink);padding:13px 16px;transform:rotate(-6deg);background:var(--gold);color:var(--ink);font:700 12px/1.7 var(--pixel);}
+.overall-stamp.won {background:#c7efab;color:#155c2b;}
+.overall-stamp.lost {background:#ffd2c5;color:#9a1431;}
+.ticket-legs {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;}
+.ticket-leg {position:relative;display:flex;gap:11px;align-items:flex-start;min-width:0;border:3px solid var(--ink);background:#fffdf4;box-shadow:3px 3px 0 var(--ink);padding:13px 12px;}
+.ticket-leg.won {background:#e1f7cb;border-color:#168b45;}
+.ticket-leg.lost {background:#ffe4dc;border-color:#7b112c;}
+.ticket-index {font:700 15px var(--pixel);background:var(--gold);border:2px solid var(--ink);padding:7px;flex:0 0 auto;}
+.ticket-leg-main {flex:1;min-width:0;}
+.ticket-fixture {font-size:14px;font-weight:950;line-height:1.35;overflow-wrap:anywhere;}
+.ticket-market {display:inline-block;margin-top:8px;background:var(--wine);color:white;border:1px solid var(--ink);font:700 10px/1.45 var(--pixel);padding:4px 7px;}
+.ticket-score {font:700 10px/1.6 var(--body);color:#6e4d48;margin-top:8px;}
+.ticket-leg-right {display:flex;flex-direction:column;gap:12px;align-items:flex-end;max-width:135px;text-align:right;flex:0 0 auto;}
+.ticket-leg-status {display:block;padding:7px 6px;border:2px solid var(--ink);font:700 9px var(--pixel);background:var(--gold);line-height:1.35;}
+.ticket-leg-status.won {background:var(--grass);color:white;}
+.ticket-leg-status.lost {background:var(--wine);color:white;}
+.ticket-odd {font:700 15px var(--pixel);color:var(--wine);white-space:nowrap;}
+.ticket-bottom {display:flex;align-items:center;justify-content:space-between;gap:15px;border-top:4px dashed var(--wine);margin-top:17px;padding-top:17px;}
+.ticket-total span,.ticket-total small,.ticket-count span,.ticket-count small {display:block;font:700 10px/1.6 var(--pixel);}
+.ticket-total strong {display:block;color:var(--wine);font:normal clamp(24px,4vw,48px) var(--display);margin:5px 0;overflow-wrap:anywhere;}
+.ticket-total small {color:#775f56;font-size:9px;}
+.ticket-count {text-align:right;min-width:100px;}
+.ticket-count b {display:block;font:normal 38px var(--display);color:var(--grass);}
+.ticket-count small {color:var(--wine);}
+.ticket-controls {display:flex;gap:11px;flex-wrap:wrap;margin-top:19px;}
+.ticket-disclaimer {margin-top:16px;font-size:10px;color:#604c4c;line-height:1.5;font-weight:750;}
+.archive-list {display:grid;gap:32px;margin-top:18px;}
+.archive-ticket {box-shadow:5px 5px 0 var(--ink);padding:16px 18px;}
+.archive-ticket .ticket-head h2 {font-size:clamp(22px,3.4vw,37px);}
+.archive-ticket .ticket-leg {box-shadow:2px 2px 0 var(--ink);}
+.archive-ticket .ticket-head {padding:17px 0;}
+.history-stats {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:0 0 18px;}
+.history-stats div {background:var(--gold);border:3px solid var(--ink);padding:13px 12px;box-shadow:3px 3px 0 var(--ink);}
+.history-stats div:nth-child(2) {background:#d6f7bd;}
+.history-stats div:nth-child(3) {background:#ffd0da;}
+.history-stats div:nth-child(4) {background:#fff0cf;}
+.history-stats b {display:block;font:normal 31px var(--display);color:var(--wine);}
+.history-stats span {font:700 9px/1.5 var(--pixel);}
+.history-help {font-size:12px;line-height:1.7;font-weight:700;color:var(--muted);}
+.result-management {margin-top:0;border:3px solid var(--ink);border-top:0;background:#fffae5;padding:13px 18px;}
+.result-management summary {font:700 11px var(--pixel);cursor:pointer;color:var(--wine);padding:4px;}
+.result-admin-row {display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:11px;padding:13px 0;border-bottom:2px dashed #dcc6a7;}
+.result-admin-row b {display:block;font-size:13px;}
+.result-admin-row small {display:block;font-size:11px;color:#644c45;margin-top:4px;}
+.result-admin-row>div {display:flex;flex-wrap:wrap;gap:6px;}
+.result-management p {font-size:11px;line-height:1.5;color:#6c4e45;}
+@media (max-width:800px) {
+ .ticket-head {align-items:flex-start;flex-direction:column;}
+ .overall-stamp {max-width:none;transform:rotate(-2deg);}
+ .ticket-legs {grid-template-columns:1fr;}
+ .history-stats {grid-template-columns:repeat(2,minmax(0,1fr));}
+ .history-header {flex-direction:column;align-items:flex-start;}
+}
+@media (max-width:680px) {
+ .group-ticket {padding:12px 11px 21px;border-width:4px;box-shadow:5px 5px 0 var(--ink);}
+ .featured-ticket {margin-top:20px;margin-bottom:24px;}
+ .ticket-topline {font-size:7px;}
+ .ticket-stamp {font-size:8px;}
+ .ticket-head {padding:16px 0;gap:11px;}
+ .ticket-head h2 {font-size:clamp(31px,9vw,49px);}
+ .ticket-kicker {font-size:9px;}
+ .ticket-metadata {font-size:11px;}
+ .ticket-leg {flex-wrap:wrap;padding:10px 8px;gap:7px;}
+ .ticket-fixture {font-size:12px;}
+ .ticket-leg-right {max-width:none;min-width:0;flex-direction:row;align-items:center;justify-content:space-between;flex-basis:100%;padding-left:37px;}
+ .ticket-leg-status {font-size:8px;}
+ .ticket-odd {font-size:13px;}
+ .ticket-total strong {font-size:clamp(25px,7vw,40px);}
+ .ticket-controls .btn {flex-grow:1;font-size:10px;}
+ .ticket-count b {font-size:28px;}
+ .result-admin-row .btn {font-size:9px;padding:8px;}
+}
+/* Dos quinielas independientes: Liga de fin de semana y Europa de entre semana. */
+.competition-choice{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;margin:21px 0 12px}
+.competition-option{min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:9px;padding:18px 20px;text-align:left;border:4px solid var(--ink);box-shadow:5px 5px 0 var(--ink);background:var(--cream);color:var(--ink);font-family:var(--body)}
+.competition-option:nth-child(2){background:#e4ebff}
+.competition-option strong{font:normal clamp(15px,2vw,22px)/1.15 var(--display);color:var(--wine)}
+.competition-option small{font:700 11px/1.5 var(--pixel)}
+.competition-option.active{background:var(--gold);outline:3px solid var(--wine);outline-offset:2px}
+.competition-option:hover{transform:translateY(-2px)}
+.competition-status{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:var(--paper);padding:12px 16px;border:3px solid var(--ink);font-size:12px;line-height:1.5;margin-bottom:21px}
+.competition-status b{color:var(--wine);font:700 11px var(--pixel)}
+.competition-status span{flex:1;min-width:220px;font-weight:700}
+@media(max-width:680px){.competition-choice{grid-template-columns:1fr;gap:11px}.competition-option{padding:12px 14px}.competition-option strong{font-size:16px}.competition-option small{font-size:10px}}
+</style>
+</head>
+<body>
+<div id="app"><div class="container" style="padding-top:130px;text-align:center"><span class="spin"></span><p style="color:#7B112C">Cargando ChuletonBet...</p></div></div>
+<script>
+(function () {
+'use strict';
+var app = document.getElementById('app');
+var players = ['Luis','Ramón','Ignacio','Mario','Curro'];
+var codes = ['H','D','A','BY','BN'];
+var EURO_CODES=[401,402,403];
+var COMPETITION_NAMES={140:'PRIMERA DIVISIÓN',141:'SEGUNDA DIVISIÓN',401:'CHAMPIONS LEAGUE',402:'EUROPA LEAGUE',403:'CONFERENCE LEAGUE'};
+function safeCompetition(type){return type==='europa'?'europa':'liga';}
+function weekKey(w,type){return safeCompetition(type)==='europa'?w+'|europa':w;}
+function isLeagueAllowed(id,type){return safeCompetition(type)==='europa'?EURO_CODES.includes(Number(id)):[140,141].includes(Number(id));}
+
+// Plantillas de Primera (20) y Segunda (22), temporada oficial 2026/27.
+var TEAM_NAMES = {
+  140: ['Athletic Club','Atlético de Madrid','CA Osasuna','RC Celta','Deportivo Alavés','Elche CF','FC Barcelona','Getafe CF','Levante UD','Málaga CF','Racing de Santander','Rayo Vallecano','RC Deportivo','RCD Espanyol','Real Betis','Real Madrid','Real Sociedad','Sevilla FC','Valencia CF','Villarreal CF'],
+  141: ['AD Ceuta FC','Albacete BP','Burgos CF','Cádiz CF','CD Castellón','CD Eldense','CD Leganés','CD Tenerife','CE Sabadell','Celta Fortuna','Córdoba CF','FC Andorra','Girona FC','Granada CF','Real Sociedad B','RCD Mallorca','Real Oviedo','Real Sporting','Real Valladolid CF','SD Eibar','UD Almería','UD Las Palmas']
+};
+var ALL_TEAMS = [140,141].flatMap(function(league){return TEAM_NAMES[league].map(function(name){return {league:league,name:name,logo:''};});});
+var DB_KEY='porra5:local:2026:v1', SOURCE_KEY='porra5:remote:2026:v1';
+function storeRead(key,fallback){try{return JSON.parse(localStorage.getItem(key))||fallback;}catch(_){return fallback;}}
+function storeWrite(key,value){
+  try {
+    localStorage.setItem(key,JSON.stringify(value));
+    return true;
+  } catch(_) {
+    return false;
+  }
+}
+function storeWrite(key,value){try{localStorage.setItem(key,JSON.stringify(value));return true;}catch(e){return false;}}
+var db=storeRead(DB_KEY,{weeks:{},cash:null});
+if(!db.weeks||typeof db.weeks!=='object')db.weeks={};
+if(!db.results||typeof db.results!=='object')db.results={};
+if(!db.resultChecks||typeof db.resultChecks!=='object')db.resultChecks={};
+var remote=storeRead(SOURCE_KEY,{fixtures:[],odds:{},oddsUpdated:null,updatedAt:0,source:null});
+var sourceError='';var sourceFetching=false;var sourcePromise=null;
+var resultError='';var resultsBusy=false;var resultsPromise=null;
+function localWeek(w,type){var k=weekKey(w,type);if(!db.weeks[k])db.weeks[k]={submissions:{},votes:{},fixed:null,fixtures:[],manualOdds:{}};var b=db.weeks[k];b.submissions=b.submissions||{};b.votes=b.votes||{};b.fixtures=b.fixtures||[];b.manualOdds=b.manualOdds||{};return b;}
+function persist(){if(!storeWrite(DB_KEY,db))throw new Error('No se pudo guardar: almacenamiento local lleno o bloqueado.');}
+function validOdd(x){var v=Number(x);return Number.isFinite(v)&&v>1&&v<100000?v:null;}
+function normalized(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();}
+function leagueOf(s){var t=normalized(s);if(!/spain|espana|laliga/.test(t)||/rfef|femeni|femenin|women|woman|youth|u19|u21|u23|friendly|cup|copa|tercera/.test(t))return 0;if(/segunda|hypermotion|la liga 2|laliga2/.test(t))return 141;if(/primera|la liga|laliga|ea sports/.test(t))return 140;return 0;}
+function europeanLeagueOf(s){
+ var t=normalized(s);
+ if(/women|woman|femeni|femenin|female|youth|u17|u19|u20|u21|u23|qualif|qualifying|friendly|futsal/.test(t))return 0;
+ // Conference antes de Europa: los nombres antiguos decían «Europa Conference League».
+ if(/conference league|liga conferencia|conference cup/.test(t))return 403;
+ if(/europa league|liga europa/.test(t))return 402;
+ if(/champions league|liga campeones/.test(t))return 401;
+ return 0;
+}
+function valueFromQuote(q){return q&&!q.suspended&&!q.stale?validOdd(q.odds_dec):null;}
+function mapQuotes(m){var out={};var qs=Array.isArray(m.quotes)?m.quotes:[];qs.forEach(function(q){var market=normalized(q.group_name||'');var tag=normalized(q.n2||'');var label=normalized(q.label||'');var group=String(q.group_id||'');var v=valueFromQuote(q);if(!v)return;var ft=(group==='40'||(market==='full time result'&&q.phase!=='inplay'));if(ft){if(tag==='1'||label==='home'||label===normalized(m.home))out.H=v;else if(tag==='x'||label==='draw'||label==='tie'||label==='empate')out.D=v;else if(tag==='2'||label==='away'||label===normalized(m.away))out.A=v;}
+if(market==='both teams to score'||market==='both teams score'||market==='both teams to score yes no'){
+ if(label==='yes'||label==='si')out.BY=v; else if(label==='no')out.BN=v;
+}
+});return out;}
+function remoteMatch(m){var league=leagueOf(m.league)||europeanLeagueOf(m.league);var id=Number(m.id),start=new Date(m.kickoff_utc||m.start||'');if(!league||!Number.isSafeInteger(id)||id<=0||isNaN(start.getTime())||!m.home||!m.away||m.in_play)return null;
+return {id:id,league:league,home:String(m.home),away:String(m.away),start:start.toISOString(),homeLogo:'',awayLogo:'',source:'MoviOdds'};}
+function mergeRemoteFixtures(oldList,newList){var byId=new Map();(oldList||[]).forEach(function(x){if(x&&x.id)byId.set(x.id,x);});newList.forEach(function(x){byId.set(x.id,x);});return Array.from(byId.values()).filter(function(x){return new Date(x.start).getTime()>Date.now()-30*86400000;});}
+function fetchJSON(url){var ctl=new AbortController(),timeout=setTimeout(function(){ctl.abort();},17000);return fetch(url,{signal:ctl.signal,cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).finally(function(){clearTimeout(timeout);});}
+async function refreshSource(force){if(sourcePromise)return sourcePromise.then(function(){return remote.detailWeek!==week||remote.detailCompetition!==competition?refreshSource(force):undefined;});if(!force&&remote.updatedAt&&Date.now()-remote.updatedAt<12*60000&&remote.detailWeek===week&&remote.detailCompetition===competition)return;sourceFetching=true;sourceError='';
+sourcePromise=(async function(){
+ // Primero se consulta un tablero compacto de 1X2. En algunos encuentros el proveedor
+ // no incluye 'Ambos marcan'; nunca se inventa esa cuota.
+ var j=await fetchJSON('https://moviodds.com/odds?sport=soccer&groups=40');
+ if(!j||!Array.isArray(j.matches))throw new Error('El proveedor no devolvió una lista de partidos.');
+ var fixtures=[],odds={};j.matches.forEach(function(m){var f=remoteMatch(m);if(!f)return;fixtures.push(f);odds[String(f.id)]=mapQuotes(m);});
+ // Obtener BTTS y cuotas completas de cada partido de la semana desde el
+ // endpoint DOCUMENTADO /snapshot?fi=..., sin descargar 100 MB de cuotas globales.
+ // Tres conexiones simultáneas como máximo para no castigar el servicio gratuito.
+ var target=fixtures.filter(function(f){return isLeagueAllowed(f.league,competition)&&inEdition(f,week,competition)&&Date.parse(f.start)>Date.now();}).slice(0,27);
+ var next=0,failed=0;
+ async function fetchOne(){while(next<target.length){var f=target[next++];try{
+  var detail=await fetchJSON('https://moviodds.com/snapshot?fi='+encodeURIComponent(f.id));
+  var qs=detail&&Array.isArray(detail.quotes)?detail.quotes:(detail&&detail.match&&Array.isArray(detail.match.quotes)?detail.match.quotes:[]);
+  if(qs.length){var extra=mapQuotes({home:f.home,away:f.away,quotes:qs});odds[String(f.id)]=Object.assign({},odds[String(f.id)],extra);}
+ }catch(_){failed++;}}}
+ await Promise.all([fetchOne(),fetchOne(),fetchOne()]);
+ if(failed>0)sourceError='No se ha podido consultar el detalle de '+failed+' partido(s). Las cuotas no publicadas se indican con —; puedes introducirlas manualmente.';
+ remote={fixtures:mergeRemoteFixtures(remote.fixtures,fixtures),odds:odds,oddsUpdated:new Date().toISOString(),updatedAt:Date.now(),detailWeek:week,detailCompetition:competition,source:'MoviOdds · Bet365'};
+ storeWrite(SOURCE_KEY,remote);
+ })().catch(function(e){sourceError='No se pudieron actualizar las cuotas automáticas ('+e.message+'). Puede ser la conexión, CORS o el proveedor. Puedes introducir los partidos y cuotas manualmente.';}).finally(function(){sourceFetching=false;sourcePromise=null;if(data){var lastWeek=week;var previousDraft=draft.slice(),previousBallot=ballot.slice();data=buildState(lastWeek,competition);draft=previousDraft;ballot=previousBallot;render();}});
+ return sourcePromise;
+}
+// Una edición de Liga agrupa el fin de semana (viernes-domingo y el cierre del lunes).
+// Europa agrupa exclusivamente los partidos UEFA de la semana lunes-domingo.
+function inEdition(f,w,type){
+ var d=Date.parse(w+'T00:00:00Z')-2*3600000,at=Date.parse(f.start);
+ if(!Number.isFinite(at))return false;
+ return safeCompetition(type)==='liga'?at>=d+4*86400000&&at<d+8*86400000+3*3600000:at>=d&&at<d+7*86400000+3*3600000;
+}
+function weekFixtures(w,type){var b=localWeek(w,type),byId=new Map();(remote.fixtures||[]).concat(b.fixtures).forEach(function(f){if(isLeagueAllowed(f.league,type)&&inEdition(f,w,type))byId.set(Number(f.id),f);});return [...byId.values()].sort(function(a,b){return Date.parse(a.start)-Date.parse(b.start);});}
+function weekOdds(w,fixtures,type){var manual=localWeek(w,type).manualOdds||{},out={};fixtures.forEach(function(f){var r=remote.odds&&remote.odds[String(f.id)]||{},m=manual[String(f.id)]||{},merged={};codes.forEach(function(c){merged[c]=validOdd(r[c])||validOdd(m[c])||null;});out[String(f.id)]=merged;});return out;}
+function makeRanking(submissions,votes,fixtures){var ids=new Set(fixtures.map(function(f){return Number(f.id);})), rows=new Map();players.forEach(function(player){var record=submissions[player];(record&&record.picks||[]).forEach(function(p){if(!ids.has(Number(p.fixtureId))||codes.indexOf(p.market)<0)return;var k=String(p.fixtureId)+':'+p.market;if(!rows.has(k))rows.set(k,{id:k,fixtureId:Number(p.fixtureId),market:p.market,proposals:0,voters:0,players:[]});var r=rows.get(k);if(r.players.indexOf(player)<0){r.players.push(player);r.proposals++;}});});players.forEach(function(player){var rec=votes[player];new Set(rec&&rec.ids||[]).forEach(function(k){if(rows.has(k))rows.get(k).voters++;});});return [...rows.values()].sort(function(a,b){return b.proposals-a.proposals||b.voters-a.voters||a.id.localeCompare(b.id);});}
+function consensusOf(ranking,fixed){var byId=new Map(ranking.map(function(r){return [r.id,r];}));if(fixed&&Array.isArray(fixed.ids)&&fixed.ids.length===4){var chosen=fixed.ids.map(function(id){return byId.get(id);});if(chosen.every(Boolean)&&new Set(chosen.map(function(r){return r.fixtureId;})).size===4)return {selected:fixed.ids,pending:[],fixed:true,complete:true,fixedAt:fixed.at};}
+var selected=[],used=new Set(),pending=[];while(selected.length<4){var pool=ranking.filter(function(r){return !used.has(r.fixtureId)&&selected.indexOf(r.id)<0;});if(!pool.length)break;var top=pool[0],group=pool.filter(function(r){return r.proposals===top.proposals&&r.voters===top.voters;});if(group.length>4-selected.length||new Set(group.map(function(r){return r.fixtureId;})).size!==group.length){pending=group.map(function(r){return r.id;});break;}group.forEach(function(r){selected.push(r.id);used.add(r.fixtureId);});}return {selected:selected,pending:pending,fixed:false,complete:selected.length===4,fixedAt:null};}
+function publication(w,type,fixtures){
+ var today=todayMadrid(),t=safeCompetition(type),f=fixtures||weekFixtures(w,type);
+ if(t==='liga'){
+  var first=addDays(w,4),last=addDays(w,6);
+  return today<first?{open:false,title:'LIGA · PRÓXIMO FIN DE SEMANA',detail:'La quiniela de Primera y Segunda se abre el viernes '+first+'.'}:
+    today>last?{open:false,title:'LIGA · JORNADA CERRADA',detail:'La quiniela de Liga está abierta de viernes a domingo. Los partidos del lunes pueden formar parte del boleto ya guardado.'}:
+    {open:true,title:'LIGA · FIN DE SEMANA',detail:'Disponible de viernes a domingo: solo Primera y Segunda. Nunca se mezclan partidos europeos.'};
+ }
+ if(today<w)return {open:false,title:'EUROPA · AÚN NO ABIERTA',detail:'La quiniela europea se abre el lunes '+w+' y queda separada de la Liga.'};
+ if(mondayISO(today)!==w)return {open:false,title:'EUROPA · JORNADA TERMINADA',detail:'La ventana europea de esta semana ha terminado. Puedes consultar sus boletos en el historial.'};
+ if(!f.length)return {open:false,title:'EUROPA · SIN PARTIDOS DETECTADOS',detail:'No hay partidos UEFA detectados para esta semana. Puedes introducir encuentros reales manualmente para activar esta edición.'};
+ var end=Math.max.apply(null,f.map(function(x){return Date.parse(x.start);})) + 3*3600000;
+ var finished=f.every(function(x){var r=db.results&&db.results[String(x.id)];return r&&r.status==='finished';});
+ if(finished||Date.now()>=end)return {open:false,title:'EUROPA · PARTIDOS TERMINADOS',detail:'Ha terminado la jornada europea. Las quinielas fijadas quedan conservadas en el historial.'};
+ return {open:true,title:'EUROPA · ENTRE SEMANA',detail:'Disponible desde el lunes hasta que acaben los partidos de Champions, Europa League y Conference. Sin resultados finales confirmados, se estima el cierre tres horas después del último comienzo.'};
+}
+function canAddManualFixture(w,type){
+ var today=todayMadrid();
+ return safeCompetition(type)==='europa'?mondayISO(today)===w&&today<=addDays(w,4):today>=addDays(w,4)&&today<=addDays(w,6);
+}
+function canEditFixture(f,w,type){return publication(w,type,weekFixtures(w,type)).open&&Date.parse(f.start)>Date.now()&&isLeagueAllowed(f.league,type);}
+function buildState(w,type){type=safeCompetition(type);var b=localWeek(w,type),f=weekFixtures(w,type),ranking=makeRanking(b.submissions,b.votes,f),saved={};
+// Migrar combinadas fijadas con el HTML anterior, siempre que todavía existan sus partidos.
+if(b.fixed&&!b.ticket&&Array.isArray(b.fixed.ids)&&b.fixed.ids.length===4){
+  var rows=b.fixed.ids.map(function(id){return ranking.find(function(r){return r.id===id;});});
+  if(rows.every(Boolean)&&new Set(rows.map(function(r){return r.fixtureId;})).size===4){
+    try{b.ticket=frozenTicket(w,type,ranking,b.fixed.ids,f,weekOdds(w,f,type));b.ticket.fixedAt=b.fixed.at||b.ticket.fixedAt;persist();}catch(_){b.ticket=null;}
+  }
+}
+players.forEach(function(p){var rec=b.submissions[p];(rec&&rec.picks||[]).forEach(function(x){if(validOdd(x.savedOdd))saved[String(x.fixtureId)+':'+x.market]=Number(x.savedOdd);});});var warnings=[];if(sourceError)warnings.push(sourceError);if(!f.length&&sourceFetching)warnings.push('Consultando partidos y cuotas sin registro…');
+return {week:w,competition:type,publication:publication(w,type,f),currentWeek:mondayISO(todayMadrid()),players:players,configured:true,persistent:false,pinsRequired:false,adminEnabled:true,oddsCacheHours:0.2,fixtures:f,teams:ALL_TEAMS,odds:weekOdds(w,f,type),oddsUpdated:remote.oddsUpdated,warnings:warnings,cash:db.cash||{cents:null,updatedBy:null,at:null},archivedOdds:saved,submissions:b.submissions,votes:b.votes,ranking:ranking,ticket:b.ticket||null,consensus:b.ticket?{selected:b.ticket.selections.map(function(p){return String(p.fixtureId)+':'+p.market;}),pending:[],fixed:true,complete:true,fixedAt:b.ticket.fixedAt}:consensusOf(ranking,b.fixed),generatedAt:new Date().toISOString()};}
+// Las selecciones fijadas se congelan con equipos, fecha y cuota. El historial
+// no depende de que el proveedor continúe publicando los partidos antiguos.
+function archiveTickets(){
+  return Object.keys(db.weeks).map(function(k){return db.weeks[k]&&db.weeks[k].ticket;})
+    .filter(function(t){return t&&Array.isArray(t.selections)&&t.selections.length===4;})
+    .sort(function(a,b){return Date.parse(b.fixedAt||b.week)-Date.parse(a.fixedAt||a.week);});
+}
+function allArchivedPicks(){return archiveTickets().flatMap(function(t){return t.selections;});}
+function frozenTicket(w,type,rows,ids,fixtures,odds){
+  return {week:w,competition:safeCompetition(type),fixedAt:new Date().toISOString(),selections:ids.map(function(id){
+    var r=rows.find(function(row){return row.id===id;}),f=fixtures.find(function(x){return x.id===r.fixtureId;});
+    var q=odds[String(f.id)]||{};
+    var manual=localWeek(w,type).manualOdds[String(f.id)]||{};
+    var isManual=(!validOdd(remote.odds&&remote.odds[String(f.id)]&&remote.odds[String(f.id)][r.market])&&validOdd(manual[r.market]));
+    return {fixtureId:f.id,market:r.market,home:f.home,away:f.away,league:f.league,start:f.start,
+      matchSource:f.source||'desconocida',odd:validOdd(q[r.market]),oddSource:validOdd(q[r.market])?(isManual?'manual':'MoviOdds'):'no disponible'};
+  })};
+}
+function matchNameArchived(p){return String(p.home||'Equipo local')+' – '+String(p.away||'Equipo visitante');}
+function selectionNameArchived(p){return ({H:'Gana '+(p.home||'local'),D:'Empate',A:'Gana '+(p.away||'visitante'),BY:'Ambos marcan · SÍ',BN:'Ambos marcan · NO'})[p.market]||'Selección no reconocida';}
+function archivedTotal(t){
+  if(!t||t.selections.length!==4)return null;
+  var total=1;
+  for(var i=0;i<4;i++){var o=validOdd(t.selections[i].odd);if(!o)return null;total*=o;}
+  return total;
+}
+function finalResult(p){
+  var r=db.results&&db.results[String(p.fixtureId)];
+  if(!r||r.status!=='finished'||!Number.isInteger(r.homeGoals)||!Number.isInteger(r.awayGoals))return null;
+  return r;
+}
+function legStatus(p){
+  var r=finalResult(p);if(!r)return 'pending';
+  var h=r.homeGoals,a=r.awayGoals;
+  var won={H:h>a,D:h===a,A:h<a,BY:h>0&&a>0,BN:h===0||a===0}[p.market];
+  return won===true?'won':won===false?'lost':'pending';
+}
+function ticketStatus(t){
+  var statuses=t.selections.map(legStatus);
+  return statuses.every(function(s){return s==='won';})?'won':statuses.includes('lost')?'lost':'pending';
+}
+function statusTag(s){return s==='won'?'✅ GANADA':s==='lost'?'❌ PERDIDA':'⏳ PENDIENTE';}
+function canEnterScore(p){var k=Date.parse(p.start);return Number.isFinite(k)&&k<Date.now()-100*60000;}
+function validFinalScore(s){
+  var m=String(s||'').trim().match(/^(\d{1,2})\s*[-:]\s*(\d{1,2})$/);
+  if(!m)return null;
+  var h=Number(m[1]),a=Number(m[2]);return h<=30&&a<=30?{homeGoals:h,awayGoals:a}:null;
+}
+function resultFromProvider(json,p){
+  var list=json&&Array.isArray(json.results)?json.results:[];
+  var r=list.find(function(x){return String(x.fixture_id)===String(p.fixtureId);});
+  if(!r||r.status!=='finished')return null;
+  // No atribuir a otro partido un resultado con ID coincidente: comprobar equipos.
+  if(!r.home||!r.away||normalized(r.home)!==normalized(p.home)||normalized(r.away)!==normalized(p.away))return null;
+  var parsed=validFinalScore(r.final_score);
+  if(!parsed)return null;
+  return {homeGoals:parsed.homeGoals,awayGoals:parsed.awayGoals,status:'finished',source:'MoviOdds',
+    at:new Date().toISOString(),finishedAt:r.finished_at||null};
+}
+async function refreshResults(force){
+  if(resultsPromise)return resultsPromise;
+  var now=Date.now(),uniq=new Map();
+  // También se verifican partidos europeos de la edición abierta, aunque el grupo
+  // todavía no haya fijado boleto, para detectar cuándo finalizó la jornada.
+  var watched=allArchivedPicks();
+  if(data&&data.competition==='europa')data.fixtures.forEach(function(f){
+    watched.push({fixtureId:f.id,home:f.home,away:f.away,start:f.start,matchSource:f.source});
+  });
+  watched.forEach(function(p){
+    var id=String(p.fixtureId), last=Number(db.resultChecks[id]||0);
+    if(p.matchSource==='manual'||!canEnterScore(p)||finalResult(p)||uniq.has(id))return;
+    if(!force&&now-last<20*60000)return;
+    uniq.set(id,p);
+  });
+  var pending=Array.from(uniq.values()).slice(0,16);
+  if(!pending.length){if(force){resultError='No hay nuevos encuentros terminados pendientes de consultar en esta tanda.';render();}return;}
+  resultsBusy=true;resultError='';if(force)render();
+  resultsPromise=(async function(){
+    var updated=0,failed=0,next=0;
+    async function worker(){
+      while(next<pending.length){
+        var p=pending[next++],id=String(p.fixtureId);
+        try{
+          var result=await fetchJSON('https://moviodds.com/results?sport=soccer&fi='+encodeURIComponent(id));
+          var verified=resultFromProvider(result,p);
+          if(verified){db.results[id]=verified;updated++;}
+        }catch(e){failed++;if(failed===1)resultError='No ha sido posible conectar con los marcadores de MoviOdds ('+e.message+'). Puedes registrar los resultados finales manualmente.';}
+        db.resultChecks[id]=Date.now();
+      }
+    }
+    await Promise.all([worker(),worker(),worker()]);
+    try{persist();}catch(e){resultError=e.message;}
+    if(force&&!failed)resultError=updated?'Se han incorporado '+updated+' nuevo(s) resultado(s) confirmado(s).':'No hay resultados finales nuevos para las selecciones consultadas.';
+  })().finally(function(){resultsBusy=false;resultsPromise=null;render();});
+  return resultsPromise;
+}
+function parseAmount(x){var v=String(x).trim().replace(',','.');if(!/^(0|[1-9]\d{0,7})(\.\d{1,2})?$/.test(v))throw new Error('Saldo no válido: usa de 0 a 99.999.999,99 € y máximo dos decimales.');var a=v.split('.');return +a[0]*100+Number((a[1]||'').padEnd(2,'0'));}
+function validatePicks(picks,w,type){if(!publication(w,type,weekFixtures(w,type)).open)throw new Error('Esta quiniela está fuera de su periodo de publicación.');if(!Array.isArray(picks)||picks.length!==4)throw new Error('Debes elegir exactamente cuatro partidos.');var fs=weekFixtures(w,type),ids=new Set();picks.forEach(function(p){var f=fs.find(function(x){return x.id===Number(p.fixtureId);});if(!f||codes.indexOf(p.market)<0||!canEditFixture(f,w,type))throw new Error('Hay partidos inválidos o ya empezados.');if(ids.has(f.id))throw new Error('No se permite repetir un partido.');ids.add(f.id);});}
+function validateBallot(ids,w,type){if(!publication(w,type,weekFixtures(w,type)).open)throw new Error('Esta quiniela está fuera de su periodo de publicación.');if(!Array.isArray(ids)||ids.length>4||new Set(ids).size!==ids.length)throw new Error('Votación inválida (máximo cuatro).');var state=buildState(w,type),byId=new Map(state.ranking.map(function(r){return [r.id,r];})),fixtures=new Set();ids.forEach(function(id){var r=byId.get(id),f=r&&state.fixtures.find(function(x){return x.id===r.fixtureId;});if(!f||!canEditFixture(f,w,type)||fixtures.has(f.id))throw new Error('La papeleta tiene un partido repetido o ya comenzado.');fixtures.add(f.id);});}
+
+var data = null;
+var selectedPlayer = localStorage.getItem('porra5-player') || '';
+var pin = '';
+var draft = [];
+var ballot = [];
+var manual = [];
+var adminPin = '';
+var view = 'picks';
+var filter = 'all';
+var search = '';
+var week = mondayISO(todayMadrid());
+// Por defecto, Europa de lunes a jueves y Liga de viernes a domingo.
+var currentDay=new Date(todayMadrid()+'T12:00:00Z').getUTCDay();
+var competition = currentDay>=1&&currentDay<=4?'europa':'liga';
+var notice = '';
+var noticeType = 'success';
+var busy = false;
+var modal = false;
+var initializedWeek = '';
+var cashDraft = null;
+function esc(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function todayMadrid(){
+  var parts = new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Madrid',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+  var o={}; parts.forEach(function(p){o[p.type]=p.value;}); return o.year+'-'+o.month+'-'+o.day;
+}
+function addDays(iso,n){var d=new Date(iso+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10);}
+function mondayISO(iso){var d=new Date(iso+'T12:00:00Z');return addDays(iso,-((d.getUTCDay()+6)%7));}
+function fmtDate(date,opts){if(!date)return '—';var d=new Date(date);return isNaN(d.valueOf())?'—':new Intl.DateTimeFormat('es-ES',Object.assign({timeZone:'Europe/Madrid'},opts||{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})).format(d);}
+function num(odd){return (Number.isFinite(Number(odd))&&Number(odd)>1)?Number(odd):null;}
+function price(odd){var n=num(odd);return n===null?'—':n.toFixed(2).replace('.',',');}
+function euros(cents){return Number.isSafeInteger(cents)?(cents/100).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €':'SIN REGISTRAR';}
+function fixture(id){return (data&&data.fixtures||[]).find(function(f){return f.id===Number(id);});}
+function oddFor(pick){
+  if(!data)return null;
+  var live=data.odds&&data.odds[String(pick.fixtureId)];
+  var current=live&&num(live[pick.market]);
+  if(current)return current;
+  return num(pick.savedOdd)||(data.archivedOdds&&num(data.archivedOdds[pickId(pick)]))||null;
+}
+function label(pick){var f=fixture(pick.fixtureId);if(!f)return pick.market;return ({H:'Gana '+f.home,D:'Empate',A:'Gana '+f.away,BY:'Ambos marcan · Sí',BN:'Ambos marcan · No'})[pick.market]||pick.market;}
+function combo(picks){if(!picks || picks.length!==4)return null;var total=1;for(var i=0;i<picks.length;i++){var odd=oddFor(picks[i]);if(odd===null||odd===undefined)return null;total*=odd;}return total;}
+function nameMatch(p){var f=fixture(p.fixtureId);return f?f.home+' · '+f.away:'Partido desconocido';}
+function pickId(p){return String(p.fixtureId)+':'+p.market;}
+function serverRows(){return data&&data.ranking||[];}
+function rowToPick(r){return {fixtureId:r.fixtureId,market:r.market};}
+function available(f){return !!(data&&data.publication&&data.publication.open)&&new Date(f.start).getTime()>Date.now();}
+function notify(s,type){notice=s;noticeType=type||'success';render();}
+async function request(url,options){
+ if(url.indexOf('/api/state')===0){var p=new URLSearchParams(url.split('?')[1]||''),w=p.get('week')||week;return buildState(w,p.get('competition')||competition);}
+ var body=options&&options.body?JSON.parse(options.body):{},path=url;
+ if(path==='/api/cash'){
+   var cents=parseAmount(body.amount);db.cash={cents:cents,updatedBy:players.includes(body.player)?body.player:'Anónimo',at:new Date().toISOString()};persist();return {ok:true,message:'¡Caja actualizada en este navegador!',cash:db.cash};
+ }
+ var w=body.week||week,type=safeCompetition(body.competition||competition),b=localWeek(w,type);
+ if(path==='/api/submission'){
+  if(!players.includes(body.player))throw new Error('Selecciona primero tu nombre.');validatePicks(body.picks,w,type);
+  var odds=weekOdds(w,weekFixtures(w,type),type);b.submissions[body.player]={picks:body.picks.map(function(p){return {fixtureId:p.fixtureId,market:p.market,savedOdd:validOdd(odds[String(p.fixtureId)]&&odds[String(p.fixtureId)][p.market])};}),at:new Date().toISOString()};persist();return {ok:true,message:'Tus cuatro pronósticos están guardados localmente.'};
+ }
+ if(path==='/api/vote'){
+  if(!players.includes(body.player))throw new Error('Selecciona tu nombre.');validateBallot(body.ids,w,type);b.votes[body.player]={ids:body.ids,at:new Date().toISOString()};persist();return {ok:true,message:'Tu votación está guardada localmente.'};
+ }
+ if(path==='/api/fix'){
+  if(!publication(w,type,weekFixtures(w,type)).open)throw new Error('Esta quiniela está fuera de su periodo de publicación.');
+  var state=buildState(w,type),byId=new Map(state.ranking.map(function(r){return [r.id,r];}));if(!Array.isArray(body.ids)||body.ids.length!==4||new Set(body.ids).size!==4)throw new Error('Debes elegir exactamente cuatro propuestas.');
+  var selected=body.ids.map(function(k){return byId.get(k);});if(selected.some(function(r){return !r;})||new Set(selected.map(function(r){return r.fixtureId;})).size!==4)throw new Error('Debes seleccionar cuatro partidos diferentes.');
+  if(selected.some(function(r){return !canEditFixture(state.fixtures.find(function(f){return f.id===r.fixtureId;}),w,type);}))throw new Error('No se pueden fijar partidos ya comenzados.');
+  b.ticket=frozenTicket(w,type,state.ranking,body.ids,state.fixtures,state.odds);
+  b.fixed={ids:body.ids,at:b.ticket.fixedAt};persist();return {ok:true,message:'¡Combinada de ChuletonBet fijada y archivada! Ya aparecerá arriba y en el historial.'};
+ }
+ if(path==='/api/unfix'){b.fixed=null;b.ticket=null;persist();return {ok:true,message:'Combinada desfijada y retirada del historial.'};}
+ throw new Error('Ruta desconocida: '+path);
+}
+async function load(){
+  busy=true;
+  try{
+    var fresh=await request('/api/state?week='+encodeURIComponent(week)+'&competition='+encodeURIComponent(competition));
+    data=fresh;
+    if(initializedWeek!==weekKey(week,competition)){
+      draft=((data.submissions[selectedPlayer]||{}).picks||[]).slice();
+      ballot=((data.votes[selectedPlayer]||{}).ids||[]).slice();
+      manual=(data.consensus.selected||[]).slice();
+      initializedWeek=weekKey(week,competition);
+    }
+  }catch(e){notice='No se pudieron cargar los datos: '+e.message;noticeType='error';}
+  finally{busy=false;render();if(data)refreshResults(false);}
+}
+async function post(url,body){
+  busy=true;render();
+  try{
+    var result=await request(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
+    notice=result.message;noticeType='success';
+    if(url==='/api/cash')cashDraft=null;
+    initializedWeek='';
+    await load();
+  }catch(e){busy=false;notify(e.message,'error');}
+}
+function header(){
+  var amount=data&&data.cash&&data.cash.cents;
+  return '<div class="retro-strip"><div class="container strip-inner"><span>★ CHULETONBET ★ EL CLUB DE LOS CINCO ★</span><span>EST. 2000 · REABIERTO COMO CHULETONBET</span><span class="strip-blink">● MODO LOCAL</span></div></div>'+
+  '<header class="top"><div class="container top-inner"><div class="logo"><div class="logo-mark"><span>⚽</span><small>CLUB 5</small></div><div><span class="logo-title">CHULETON<i>BET</i></span><span class="logo-sub">🍷 VINO &nbsp;✦&nbsp; ⚽ FÚTBOL &nbsp;✦&nbsp; 🥩 CHULETÓN</span></div></div>'+
+  '<div class="session"><span class="pill desktop">EDICIÓN '+esc(week.slice(0,4))+'</span><button class="cash-shortcut" data-action="tab" data-tab="cash" aria-label="Abrir la Caja compartida">💰 <strong>CAJA</strong> <span>'+esc(Number.isSafeInteger(amount)?euros(amount):'VER SALDO')+'</span></button><label class="player-label">TÚ ERES <select class="player-select" id="user-choice" aria-label="Selecciona tu participante"><option value="">¿Quién eres?</option>'+players.map(function(p){return '<option value="'+esc(p)+'" '+(selectedPlayer===p?'selected':'')+'>'+esc(p)+'</option>';}).join('')+'</select></label></div></div></header>';
+}
+function competitionSwitch(){
+ return '<section class="competition-choice" aria-label="Modalidad de quiniela">'+
+  '<button class="competition-option '+(competition==='liga'?'active':'')+'" data-action="competition" data-competition="liga"><strong>⚽ LIGA · FIN DE SEMANA</strong><small>Primera + Segunda · viernes a domingo</small></button>'+
+  '<button class="competition-option '+(competition==='europa'?'active':'')+'" data-action="competition" data-competition="europa"><strong>🏆 EUROPA · ENTRE SEMANA</strong><small>Champions + Europa League + Conference · desde el lunes</small></button>'+
+  '</section><div class="competition-status"><b>'+esc(data.publication.title)+'</b><span>'+esc(data.publication.detail)+'</span></div>';
+}
+function hero(){
+  var ends=addDays(week,6);
+  var span=''+fmtDate(week+'T12:00:00Z',{day:'numeric',month:'short'})+' – '+fmtDate(ends+'T12:00:00Z',{day:'numeric',month:'short',year:'numeric'});
+  var people=players.filter(function(p){return data&&data.submissions[p]&&data.submissions[p].picks&&data.submissions[p].picks.length===4;}).length;
+  var total=combo(draft);
+  return '<section class="hero"><div class="hero-copy"><div class="eyebrow">✦ EL CLUB MÁS POCO SERIO DEL FÚTBOL SERIO ✦</div><h1>CHULETÓN<br><em>BET<span>!</span></em></h1><p>Cuatro pronósticos, cinco artistas y una fe inquebrantable. Cuotas reales cuando estén disponibles, coincidencias y desempates a la vieja usanza.</p><div class="hero-tags"><span>'+(competition==='europa'?'🏆 CHAMPIONS + EUROPA + CONFERENCE':'⚽ PRIMERA + SEGUNDA')+'</span><span>🍷 GRAN RESERVA</span><span>🥩 CORTE PREMIUM</span></div></div>'+
+  '<div class="hero-aside"><div class="sticker-collage" aria-hidden="true"><div class="sticker sticker-ball">⚽</div><div class="sticker sticker-wine">🍷</div><div class="sticker sticker-steak">🥩</div><div class="sticker sticker-star">★</div><div class="sticker-caption">100% FÚTBOL<br>0% VERGÜENZA</div></div><div class="week-tools"><button class="square" data-action="prev" aria-label="Semana anterior">‹</button><span>📅 '+esc(span)+'</span><button class="square" data-action="next" aria-label="Semana siguiente">›</button></div></div></section>'+
+  '<div class="ticker" aria-label="Fútbol, apuestas, vino y chuletón"><div class="ticker-track" aria-hidden="true">★ FÚTBOL DEL BUENO ★ VINO DEL CARO ★ CHULETÓN AL PUNTO ★ CUOTAS & COINCIDENCIAS ★ CHULETONBET ★ FÚTBOL DEL BUENO ★ VINO DEL CARO ★ CHULETÓN AL PUNTO ★ CUOTAS & COINCIDENCIAS ★</div></div>'+
+  '<div class="grid-metrics"><div class="metric"><div class="k">👥 LA PEÑA</div><div class="v">5 <small>CRACKS</small></div></div>'+
+  '<div class="metric"><div class="k">🎟 BOLETOS ENVIADOS</div><div class="v">'+people+' <small>/ 5</small></div></div>'+
+  '<div class="metric"><div class="k">⚡ PROPUESTAS ÚNICAS</div><div class="v">'+serverRows().length+'</div></div>'+
+  '<div class="metric accent"><div class="k">💥 MI COMBINADA</div><div class="v">'+(total===null?'—':price(total))+' <small>x</small></div></div></div>';
+}
+function alerts(){
+  var out='';
+  if(notice)out+='<div class="alert '+(noticeType==='success'?'success':'')+'" role="status">'+esc(notice)+' <button class="btn small ghost" data-action="dismiss" style="float:right">Cerrar</button></div>';
+  if(data && !data.persistent)out+='<div class="alert warn">💾 <b>VERSIÓN HTML LOCAL:</b> pronósticos, votos y Caja se guardan únicamente en este navegador. Si abres la web en cinco móviles distintos, <b>NO se sincronizarán</b>. Para compartirla en directo hará falta un servidor o base de datos común.</div>';
+  (data&&data.warnings||[]).forEach(function(s){out+='<div class="alert warn">⚠ '+esc(s)+'</div>';});
+  if(data&&data.oddsUpdated)out+='<div class="legend">Cuotas de prepartido obtenidas de MoviOdds (fuente independiente que atribuye sus precios a Bet365) · última consulta: '+esc(fmtDate(data.oddsUpdated,{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}))+' · actualización aproximada cada 12 min · si ya no hay cuota prepartido, se muestra la última archivada disponible · importes orientativos, no garantizados.</div>';
+  return out;
+}
+function nav(){
+  return '<div class="nav">'+[
+    ['picks',competition==='europa'?'🏆 Mis 4 de Europa':'⚽ Mis 4 de Liga'],['rank','🏆 Coincidencias'],['vote','🗳 Votaciones'],['history','🧾 Historial'],['people','🍷 Los cinco'],['teams','🏟 Equipos'],['cash','💰 Caja']
+  ].map(function(item){return '<button data-action="tab" data-tab="'+item[0]+'" class="'+(view===item[0]?'active':'')+'">'+item[1]+(item[0]==='rank'?'<span class="bubble">'+serverRows().length+'</span>':'')+'</button>';}).join('')+'</div>';
+}
+function fixtureList(){
+  if(!data.fixtures.length)return empty('📅','No se han encontrado encuentros disponibles en esta semana. Usa «Añadir partido real» al final.');
+  var games=data.fixtures.filter(function(f){return filter==='all'||String(f.league)===filter;});
+  var q=search.toLocaleLowerCase('es');
+  return games.map(function(f){
+    var chosen=draft.find(function(p){return p.fixtureId===f.id;});
+    var odds=data.odds[String(f.id)]||{};
+    var live=!available(f);
+    var buttons=codes.map(function(code){
+      var caption=({H:'Local',D:'Empate',A:'Visit.',BY:'BTTS Sí',BN:'BTTS No'})[code];
+      var selected=chosen&&chosen.market===code;
+      return '<button data-action="market" data-id="'+f.id+'" data-market="'+code+'" '+(live?'disabled':'')+' class="market-btn '+(selected?'chosen ':'')+(num(odds[code])===null?'missing':'')+'" title="'+esc(({H:'Gana '+f.home,D:'Empate',A:'Gana '+f.away,BY:'Ambos marcan: sí',BN:'Ambos marcan: no'})[code])+'"><span>'+caption+'</span><strong>'+price(odds[code])+'</strong></button>';
+    }).join('');
+    return '<article class="match '+(chosen?'used':'')+'" data-searchable="'+esc((f.home+' '+f.away).toLocaleLowerCase('es'))+'">'+
+      '<div class="match-top"><span>'+(COMPETITION_NAMES[f.league]||'COMPETICIÓN')+'</span><span>'+esc(fmtDate(f.start))+(live?' · INICIADO':'')+'</span></div>'+
+      '<div class="match-teams"><div class="team">'+(f.homeLogo?'<img loading="lazy" src="'+esc(f.homeLogo)+'" alt="">':'')+'<span>'+esc(f.home)+'</span></div><span class="vs">VS</span><div class="team"><span>'+esc(f.away)+'</span>'+(f.awayLogo?'<img loading="lazy" src="'+esc(f.awayLogo)+'" alt="">':'')+'</div></div>'+
+      '<div class="market-row">'+buttons+'</div><div class="match-extras"><span>'+(Object.keys(localWeek(week,competition).manualOdds[String(f.id)]||{}).length?'✍️ Cuotas completadas manualmente · ':'')+(f.source==='manual'?'✍️ Partido añadido manualmente':'📡 Partido detectado por '+esc(f.source||'el proveedor'))+'</span><button class="btn small ghost" data-action="manual-odds" data-id="'+f.id+'">✍️ Cuotas manuales</button>'+(f.source==='manual'?'<button class="btn small ghost" data-action="delete-fixture" data-id="'+f.id+'">Quitar partido</button>':'')+'</div></article>';
+  }).join('');
+}
+function teamOptions(league){return (TEAM_NAMES[league]||[]).map(function(n){return '<option value="'+esc(n)+'">'+esc(n)+'</option>';}).join('');}
+function manualFixtureUI(){
+ var euro=competition==='europa',editable=canAddManualFixture(week,competition);
+ var select=euro?'<label>Competición<select id="new-league"><option value="401">Champions League</option><option value="402">Europa League</option><option value="403">Conference League</option></select></label>':
+   '<label>División<select id="new-league"><option value="140">Primera División</option><option value="141">Segunda División</option></select></label>';
+ var teams=euro?'<label>Equipo local<input id="new-home" maxlength="90" placeholder="Nombre real del club"></label><label>Equipo visitante<input id="new-away" maxlength="90" placeholder="Nombre real del club"></label>':
+   '<label>Local<select id="new-home">'+teamOptions(140)+'</select></label><label>Visitante<select id="new-away">'+teamOptions(140)+'</select></label>';
+ return '<details class="block manual-add"><summary>➕ AÑADIR PARTIDO REAL MANUALMENTE</summary><p class="description">Si el proveedor no publica un encuentro '+(euro?'de Champions, Europa League o Conference':'de Primera o Segunda')+', introdúcelo con su fecha real. No se generan partidos ficticios.</p><div class="manual-form">'+select+teams+'<label>Fecha y hora de tu dispositivo<input id="new-date" type="datetime-local" required></label><button class="btn primary" data-action="add-fixture" '+(!editable?'disabled title="Fuera del periodo de esta quiniela"':'')+'>Añadir este partido</button></div></details>';
+}
+function slots(){
+  var result='';
+  for(var i=0;i<4;i++){
+    var p=draft[i];
+    result+='<div class="slot '+(p?'filled':'')+'"><span class="slot-num">0'+(i+1)+'</span>';
+    if(p) result+='<div class="slot-info"><strong>'+esc(nameMatch(p))+'</strong><small>'+esc(label(p))+'</small></div><span class="price">'+price(oddFor(p))+'</span><button class="remove" data-action="remove" data-index="'+i+'" title="Quitar">×</button>';
+    else result+='<div class="slot-info"><small>Partido '+(i+1)+' pendiente</small></div>';
+    result+='</div>';
+  }
+  return result;
+}
+function picksPanel(){
+  var total=combo(draft);
+  var saved=(data.submissions[selectedPlayer]||{}).picks||[];
+  var same=JSON.stringify(draft)===JSON.stringify(saved);
+  return '<div class="panel-heading"><div><h2>'+(competition==='europa'?'Tu quiniela europea':'Tu quiniela de Liga')+'</h2><button class="btn small ghost" data-action="refresh-odds">↻ Actualizar cuotas públicas</button><p class="description">Elige un partido y un mercado. Máximo un pronóstico por encuentro, exactamente cuatro por edición. Las quinielas de Liga y Europa son independientes.</p></div><span class="pill light">'+(selectedPlayer?'Jugando: '+esc(selectedPlayer):'Elige tu nombre ↑')+'</span></div>'+
+    '<div class="draft-layout"><div class="fixtures-wrap"><div class="filterbar"><input id="game-search" class="filter" value="'+esc(search)+'" placeholder="Buscar equipo..." aria-label="Buscar equipos">'+
+    '<div class="chips">'+(competition==='europa'?
+    [['all','Todos'],['401','Champions'],['402','Europa L.'],['403','Conference']].map(function(e){return '<button class="chip '+(filter===e[0]?'on':'')+'" data-action="filter" data-filter="'+e[0]+'">'+e[1]+'</button>';}).join(''):
+    [['all','Todos'],['140','Primera'],['141','Segunda']].map(function(e){return '<button class="chip '+(filter===e[0]?'on':'')+'" data-action="filter" data-filter="'+e[0]+'">'+e[1]+'</button>';}).join(''))+'</div></div>'+
+    '<div id="fixtures">'+fixtureList()+'</div>'+manualFixtureUI()+'</div>'+
+    '<aside class="draft-sidebar"><div class="sidebar-top"><h3>Tus selecciones</h3><span class="counter">'+draft.length+' DE 4</span></div>'+slots()+'<div class="combined"><small>CUOTA TOTAL MULTIPLICADA</small><b>'+(total===null?'—':price(total))+' x</b><p>'+(draft.length<4?'Elige las cuatro selecciones para calcularla.':total===null?'Hay alguna cuota no disponible. No se estima ni se inventa.':'Se multiplican las cuatro cuotas decimales; pueden cambiar antes del partido.')+'</p></div>'+
+    '<div class="side-actions"><button class="btn primary" data-action="submit" '+(!data.publication.open||!selectedPlayer||draft.length!==4||same||busy?'disabled':'')+'>'+(busy?'Guardando...':same?'✓ Pronósticos guardados':'Guardar mis 4 pronósticos')+'</button><button class="btn ghost" data-action="reset" '+(!data.publication.open||!draft.length||busy?'disabled':'')+'>Restaurar selecciones guardadas</button></div>'+
+    '<p class="note">'+(!data.publication.open?'⚠ Esta edición no admite nuevos pronósticos fuera de su ventana de publicación. ':'')+'Puedes guardar aunque una cuota no esté disponible. En esta versión HTML no se usan PIN personales.</p></aside></div>';
+}
+function empty(emoji,message){return '<div class="empty"><div class="emoji">'+emoji+'</div>'+esc(message)+'</div>';}
+function rankingRow(r,i){
+  var f=fixture(r.fixtureId),status=data.consensus.selected.includes(r.id)?'✓ En el top 4':data.consensus.pending.includes(r.id)?'⚑ Desempate':'';
+  return '<div class="rank-row '+(data.consensus.selected.includes(r.id)?'top':'')+'"><span class="rank-num">'+(i+1)+'</span><div class="rank-body"><strong>'+esc(f?f.home+' – '+f.away:'Partido')+' '+(status?'<span class="status-chip '+(status.indexOf('Desempate')>=0?'wait':'')+'">'+status+'</span>':'')+'</strong><small>'+esc(label(rowToPick(r)))+' · '+esc(r.players.join(', '))+'</small></div><div class="rank-points"><div class="rank-stat"><b>'+r.proposals+'</b><span>Coincid.</span></div><div class="rank-stat"><b>'+r.voters+'</b><span>Votos</span></div><div class="rank-stat"><b>'+price(oddFor(rowToPick(r)))+'</b><span>Cuota</span></div></div></div>';
+}
+function rankingPanel(){
+  return '<div class="panel-heading"><div><h2>Las selecciones más repetidas · '+(competition==='europa'?'Europa':'Liga')+'</h2><p class="description">Primero cuentan las coincidencias de los cinco. Los votos sirven para romper empates. Nunca se elegirán dos apuestas del mismo partido.</p></div><span class="pill">'+serverRows().length+' propuestas</span></div>'+
+  '<div class="two-col"><div><div class="rank-list">'+(serverRows().length?serverRows().map(rankingRow).join(''):empty('📊','Cuando los participantes guarden sus cuatro pronósticos aparecerá aquí la clasificación.'))+'</div></div><div>'+finalBlock()+'</div></div>';
+}
+function finalBlock(){
+  var consensus=data.consensus||{selected:[],pending:[],complete:false};
+  var byId={};serverRows().forEach(function(r){byId[r.id]=r;});
+  var picks=data.ticket?data.ticket.selections:consensus.selected.map(function(id){return byId[id]&&rowToPick(byId[id]);}).filter(Boolean);
+  var total=data.ticket?archivedTotal(data.ticket):combo(picks);
+  var out='<div class="block"><h3>🏆 La combinada del grupo</h3><p>'+(consensus.fixed?'¡Fijada! Ya aparece en lo más alto de ChuletonBet y en el historial.':consensus.complete?'Cuatro selecciones obtenidas por coincidencias y votos. Pulsa Fijar para congelarlas y guardarlas.':'Selección provisional: aún quedan posiciones por decidir.')+'</p>';
+  for(var i=0;i<4;i++){
+    var p=picks[i];
+    out+='<div class="final-item"><span class="n">'+(i+1)+'</span><div class="detail"><strong>'+esc(p?(data.ticket?matchNameArchived(p):nameMatch(p)):'Pendiente')+'</strong><small>'+esc(p?(data.ticket?selectionNameArchived(p):label(p)):'Sin asignar')+'</small></div><span class="p">'+(p?price(data.ticket?p.odd:oddFor(p)):'—')+'</span></div>';
+  }
+  out+='<div class="final-total"><span>Cuota combinada común</span><b>'+(total===null?'—':price(total)+' x')+'</b></div>';
+  if(consensus.pending.length)out+='<p style="color:var(--amber)">⚑ Empate sin resolver entre '+consensus.pending.length+' propuestas. Votad para deshacerlo.</p>';
+  if(consensus.complete&&!consensus.fixed)out+='<div style="margin-top:15px"><button class="btn primary" data-action="fix-auto" '+(!data.publication.open?'disabled':'')+'>📌 FIJAR ESTA COMBINADA Y GUARDARLA</button></div>';
+  if(data.adminEnabled)out+='<div style="margin-top:17px"><button class="btn" data-action="manual-mode" '+(!consensus.fixed&&!data.publication.open?'disabled':'')+'>'+(consensus.fixed?'Modificar / desfijar combinada':'Gestionar desempate manual')+'</button></div>';
+  out+='</div>';
+  return out;
+}
+// Gran boleto al comienzo de la página y tickets históricos por semana.
+function ticketLeg(p,index){
+  var result=finalResult(p),status=legStatus(p);
+  var score=result?result.homeGoals+' – '+result.awayGoals:'Marcador pendiente';
+  return '<div class="ticket-leg '+status+'"><span class="ticket-index">0'+(index+1)+'</span><div class="ticket-leg-main">'+
+    '<div class="ticket-fixture">'+esc(matchNameArchived(p))+'</div><div class="ticket-market">'+esc(selectionNameArchived(p))+'</div>'+
+    '<div class="ticket-score">'+esc(score)+(result?' · '+(result.source==='manual'?'INTRODUCIDO MANUALMENTE':'RESULTADO MoviOdds'):'')+'</div></div>'+
+    '<div class="ticket-leg-right"><span class="ticket-leg-status '+status+'">'+statusTag(status)+'</span><strong class="ticket-odd">'+price(p.odd)+' x</strong></div></div>';
+}
+function ticketCard(t,featured){
+  var overall=ticketStatus(t),total=archivedTotal(t);
+  var wins=t.selections.filter(function(p){return legStatus(p)==='won';}).length;
+  var lost=t.selections.filter(function(p){return legStatus(p)==='lost';}).length;
+  var type=safeCompetition(t.competition);var isCurrent=t.week===week&&type===competition;
+  var start=fmtDate(t.week+'T12:00:00Z',{day:'numeric',month:'long',year:'numeric'});
+  return '<article class="group-ticket '+(featured?'featured-ticket':'archive-ticket')+'">'+
+    '<div class="ticket-topline"><span>✂····· CHULETONBET · '+(type==='europa'?'QUINIELA EUROPEA · UEFA':'QUINIELA DE LIGA · 1ª + 2ª')+' ·····✂</span><span class="ticket-stamp">★ OFICIAL ★</span></div>'+
+    '<div class="ticket-head"><div><div class="ticket-kicker">⚽ 🍷 🥩 &nbsp; '+(featured?'¡EL BOLETO MÁS IMPORTANTE!':'BOLETO GUARDADO')+'</div>'+
+    '<h2>'+ (featured?'LA COMBINADA <em>DEL GRUPO</em>':'QUINIELA · '+esc(start))+'</h2>'+
+    '<div class="ticket-metadata">'+(type==='europa'?'🏆 CHAMPIONS · EUROPA · CONFERENCE':'⚽ PRIMERA · SEGUNDA')+' · Semana del '+esc(start)+' · Fijada el '+esc(fmtDate(t.fixedAt,{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}))+'</div></div>'+
+    '<div class="overall-stamp '+overall+'">'+(overall==='won'?'🏆 COMPLETA: GANADA':overall==='lost'?'❌ COMBINADA PERDIDA':'⏳ EN JUEGO / PENDIENTE')+'</div></div>'+
+    '<div class="ticket-legs">'+t.selections.map(ticketLeg).join('')+'</div>'+
+    '<div class="ticket-bottom"><div class="ticket-total"><span>CUOTA FIJADA DE LOS CUATRO</span><strong>'+(total===null?'SIN CUOTA COMPLETA':price(total)+' x')+'</strong><small>Cuotas guardadas al fijarla; no varían con el mercado.</small></div>'+
+    '<div class="ticket-count"><b>'+wins+' / 4</b><span>ACERTADAS</span>'+(lost?'<small>'+lost+' fallada(s)</small>':'')+'</div></div>'+
+    '<div class="ticket-controls">'+
+    (featured?'<button class="btn primary" data-action="tab" data-tab="history">🧾 VER HISTORIAL</button>':'')+
+    (!isCurrent?'<button class="btn ghost" data-action="go-week" data-week="'+esc(t.week)+'" data-competition="'+type+'">📅 IR A ESTA SEMANA</button>':'')+
+    '<button class="btn ghost" data-action="refresh-results" '+(resultsBusy?'disabled':'')+'>↻ '+(resultsBusy?'CONSULTANDO…':'ACTUALIZAR RESULTADOS')+'</button></div>'+
+    '<div class="ticket-disclaimer">Cada resultado se comprueba al finalizar el partido. Si no llega desde MoviOdds queda pendiente. Los marcadores manuales están identificados. No se infieren aciertos por las cuotas.</div></article>';
+}
+function featuredTicket(){
+  var tickets=archiveTickets().filter(function(t){return safeCompetition(t.competition)===competition;});var active=data&&data.ticket;
+  // Se prioriza la semana seleccionada. Si no tiene boleto, se muestra el último fijado.
+  return active?ticketCard(active,true):(tickets.length?ticketCard(tickets[0],true):'');
+}
+function historyPanel(){
+  var tickets=archiveTickets();
+  var nWon=tickets.filter(function(t){return ticketStatus(t)==='won';}).length;
+  var nLost=tickets.filter(function(t){return ticketStatus(t)==='lost';}).length;
+  var nPending=tickets.length-nWon-nLost;
+  var checked=allArchivedPicks().filter(function(p){return finalResult(p);}).length;
+  return '<div class="panel-heading history-header"><div><h2>🧾 El museo del chuletón</h2><p class="description">Todas las quinielas grupales fijadas, conservadas con sus partidos y cuotas originales. Resultados al término de cada encuentro.</p></div><button class="btn primary" data-action="refresh-results" '+(resultsBusy?'disabled':'')+'>↻ '+(resultsBusy?'CONSULTANDO…':'ACTUALIZAR MARCADORES')+'</button></div>'+
+    '<div class="history-stats"><div><b>'+tickets.length+'</b><span>QUINIELAS FIJADAS</span></div><div><b>'+nWon+'</b><span>GANADAS COMPLETAS</span></div><div><b>'+nLost+'</b><span>PERDIDAS</span></div><div><b>'+nPending+'</b><span>PENDIENTES</span></div></div>'+
+    (resultError?'<div class="alert warn" role="status">'+esc(resultError)+'</div>':'')+
+    '<p class="history-help">Se han registrado '+checked+' resultados finales entre las selecciones archivadas. Para corregir o añadir un marcador confirmado, usa «Editar marcador final» en cada partido. Los marcadores de partidos no terminados no se permiten.</p>'+
+    (tickets.length?'<div class="archive-list">'+tickets.map(function(t){return ticketCard(t,false)+
+      '<details class="result-management"><summary>🛠 Editar marcadores finales de esta quiniela</summary><div class="result-grid">'+t.selections.map(function(p){
+        var r=finalResult(p),done=canEnterScore(p),score=r?r.homeGoals+'-'+r.awayGoals:'Sin resultado';
+        return '<div class="result-admin-row"><span><b>'+esc(matchNameArchived(p))+'</b><small>'+esc(fmtDate(p.start))+' · '+esc(score)+(r?' ('+(r.source==='manual'?'manual':'MoviOdds')+')':'')+'</small></span><div>'+ 
+          '<button class="btn small" data-action="manual-result" data-id="'+esc(p.fixtureId)+'" '+(done?'':'disabled title="El partido aún no ha terminado"')+'>✍️ EDITAR MARCADOR FINAL</button>'+
+          (r?'<button class="btn small ghost" data-action="clear-result" data-id="'+esc(p.fixtureId)+'">BORRAR</button>':'')+'</div></div>';
+      }).join('')+'</div><p>Un marcador manual no es una verificación automática. Solo introdúcelo después de comprobar el resultado final real. Se guardará en este navegador.</p></details>';}).join('')+'</div>':empty('🧾','Aún no hay quinielas grupales fijadas. Cuando tengáis cuatro selecciones, pulsad «Fijar combinada» desde Coincidencias. Aparecerán aquí para siempre mientras conservéis los datos de este navegador.'));
+}
+function votePanel(){
+  var items=serverRows();
+  return '<div class="panel-heading"><div><h2>Votación de desempate · '+(competition==='europa'?'Europa':'Liga')+'</h2><p class="description">Cada participante puede dar hasta cuatro votos. Un voto por partido. Puedes actualizar tu papeleta mientras los encuentros no hayan comenzado.</p></div><span class="pill light">'+ballot.length+' / 4 votos</span></div><div class="two-col"><div>'+
+  (items.length?items.map(function(r){
+    var checked=ballot.includes(r.id);var f=fixture(r.fixtureId);var past=!f||!available(f);
+    return '<div class="vote-choice '+(checked?'selected':'')+'"><button data-action="vote-toggle" data-id="'+esc(r.id)+'" '+(past?'disabled':'')+'><span class="check">'+(checked?'✓':'')+'</span><span class="body"><b>'+esc(nameMatch(r))+'</b><small>'+esc(label(rowToPick(r)))+' · '+r.proposals+' coincidencia(s) · '+esc(r.players.join(', '))+'</small></span><span class="count">'+r.voters+' votos</span></button></div>';
+  }).join(''):empty('✓','Todavía no hay propuestas. Primero deben enviarse los pronósticos.'))+
+  '<button class="btn primary" data-action="submit-vote" '+(!data.publication.open||!selectedPlayer||busy||!items.length?'disabled':'')+'>Guardar mi votación</button><p class="note">La clasificación prioriza coincidencias; los votos desempatan. Si persiste el empate, podéis fijar los cuatro manualmente.</p></div><div>'+finalBlock()+'</div></div>';
+}
+function peoplePanel(){
+  return '<div class="panel-heading"><div><h2>Los cinco participantes · '+(competition==='europa'?'Europa':'Liga')+'</h2><p class="description">Todas las combinadas de esta semana, con las cuotas disponibles del proveedor o introducidas manualmente.</p></div></div>'+
+  '<div class="people">'+players.map(function(player){
+    var submission=data.submissions[player];var picks=submission&&submission.picks||[];
+    var combined=combo(picks);
+    return '<div class="person"><div class="person-title"><span class="avatar">'+esc(player[0])+'</span><b>'+esc(player)+'</b><span class="pill '+(picks.length===4?'light':'')+'">'+(picks.length===4?'Enviado':'Pendiente')+'</span></div>'+
+      (picks.length?picks.map(function(p){return '<div class="person-row"><div><strong>'+esc(nameMatch(p))+'</strong><span>'+esc(label(p))+'</span></div><span class="price">'+price(oddFor(p))+'</span></div>';}).join(''):'<p class="description">Todavía no ha enviado sus cuatro pronósticos.</p>')+
+      '<div class="person-total">Cuota total: <b>'+(combined===null?'—':price(combined)+' x')+'</b></div></div>';
+  }).join('')+'</div>';
+}
+function cashPanel(){
+  var c=data.cash||{},has=Number.isSafeInteger(c.cents);
+  var amount=cashDraft!==null?cashDraft:(has?(c.cents/100).toFixed(2):'');
+  return '<div class="panel-heading cash-heading"><div><h2>💰 LA CAJA DEL CLUB</h2><p class="description">El bote común, a la vista de todos. Puedes cambiarlo cuando quieras: aquí no hay tesorero con despacho.</p></div><div class="cash-heading-actions"><span class="pill light">✦ FONDO COMÚN ✦</span><button class="btn small cash-refresh" data-action="refresh-cash" '+(busy?'disabled':'')+'>↻ ACTUALIZAR</button></div></div>'+
+  '<div class="cash-stage"><div class="cash-bunting" aria-hidden="true">✦ &nbsp; CLUB PRIVADO DE LOS 5 &nbsp; ✦</div><div class="cash-icons" aria-hidden="true"><span>💸</span><span>🍷</span><span>🥩</span></div><div class="cash-overline">BANCO CENTRAL DEL CHULETÓN · SALDO ACTUAL</div><div class="cash-money" aria-live="polite">'+esc(euros(c.cents))+'</div><div class="cash-underline">'+(has?'DINERO APUNTADO EN LA CAJA':'TODAVÍA NO HABÉIS PUESTO NINGÚN IMPORTE')+'</div><div class="cash-seal" aria-hidden="true">€<small>PEÑA<br>OFICIAL</small></div></div>'+
+  '<div class="cash-bottom"><div class="cash-editor block"><div class="cash-editor-top"><span class="cash-doodle" aria-hidden="true">✍️</span><div><h3>¿Cuánto hay en la hucha?</h3><p>Cualquier persona puede actualizar la cifra. La nueva cantidad sustituye a la anterior para los cinco.</p></div></div><label class="cash-input-label" for="cash-amount">NUEVO SALDO · EUR</label><div class="cash-form"><div class="cash-input-wrap"><span aria-hidden="true">€</span><input id="cash-amount" inputmode="decimal" type="number" step="0.01" min="0" max="99999999.99" placeholder="Ej.: 125.50" value="'+esc(amount)+'" aria-label="Nuevo saldo de la caja en euros"></div><button class="btn primary cash-save" data-action="save-cash" '+(busy?'disabled':'')+'>💾 GUARDAR CAJA</button></div><p class="note">Sin PIN ni permisos especiales. Usa una cantidad positiva o cero, con dos decimales como máximo. No se mueve dinero real: es un registro compartido.</p></div>'+
+  '<div class="cash-receipt"><div class="receipt-head">✂ ········· TICKET DE CAJA ········· ✂</div><div class="receipt-icon" aria-hidden="true">🧾</div><h3>EL GRAN LIBRO DE CUENTAS</h3><div class="receipt-row"><span>ÚLTIMO SALDO</span><strong>'+esc(euros(c.cents))+'</strong></div><div class="receipt-row"><span>ÚLTIMO CAMBIO</span><strong>'+(c.at?esc(fmtDate(c.at,{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})):'Sin registrar')+'</strong></div><div class="receipt-row"><span>CAMBIADO POR</span><strong>'+esc(c.updatedBy||'—')+'</strong></div><div class="receipt-footer">★ GRACIAS POR SU APORTACIÓN ★<br><small>NO ES UN EXTRACTO BANCARIO REAL</small></div></div></div>';
+}
+function teamsPanel(){
+  return '<div class="panel-heading"><div><h2>Equipos de Primera y Segunda</h2><p class="description">Plantillas oficiales de la temporada 2026/27, incluidas en el archivo (disponibles sin conexión).</p></div><span class="pill">'+data.teams.length+' clubes</span></div>'+
+  '<div class="league-groups">'+[140,141].map(function(id){
+    var teams=data.teams.filter(function(t){return t.league===id;});
+    return '<div class="block"><h3>'+(id===140?'⚽ Primera División':'⚽ Segunda División')+' · '+teams.length+'</h3><p>Equipos inscritos en la competición.</p><div class="team-grid">'+
+      (teams.length?teams.map(function(t){return '<div class="team-tile">'+(t.logo?'<img loading="lazy" src="'+esc(t.logo)+'" alt="">':'⚽')+'<span>'+esc(t.name)+'</span></div>';}).join(''):empty('🏟','Todavía no hay equipos.'))+'</div></div>';
+  }).join('')+'</div>';
+}
+function manualModal(){
+  if(!modal)return '';
+  var rows=serverRows();
+  return '<div class="overlay"><div class="modal" style="max-width:520px;max-height:90vh;overflow:auto"><h2>Desempate manual</h2><p>Selecciona cuatro propuestas de partidos diferentes. En esta versión local no hay PIN de administrador.</p>'+
+    rows.map(function(r){
+      var checked=manual.includes(r.id);
+      return '<div class="vote-choice '+(checked?'selected':'')+'"><button data-action="manual-toggle" data-id="'+esc(r.id)+'"><span class="check">'+(checked?'✓':'')+'</span><span class="body"><b>'+esc(nameMatch(r))+'</b><small>'+esc(label(rowToPick(r)))+'</small></span></button></div>';
+    }).join('')+
+    '<input type="password" id="admin-secret" placeholder="PIN del administrador" value="'+esc(adminPin)+'"><div class="modal-actions"><button class="btn primary" data-action="submit-fix" '+(manual.length!==4?'disabled':'')+'>Fijar los 4</button><button class="btn ghost" data-action="close-modal">Cancelar</button></div>'+
+    (data.consensus.fixed?'<button class="btn danger" style="margin-top:12px;width:100%" data-action="unfix">Quitar selección manual</button>':'')+'</div></div>';
+}
+function render(){
+  if(!data){app.innerHTML='<div class="container" style="padding-top:110px;text-align:center"><span class="spin"></span><p style="color:#7B112C">Cargando ChuletonBet...</p></div>';return;}
+  var panel=({picks:picksPanel,rank:rankingPanel,vote:votePanel,history:historyPanel,people:peoplePanel,teams:teamsPanel,cash:cashPanel})[view]();
+  app.innerHTML=header()+'<main class="container">'+featuredTicket()+hero()+competitionSwitch()+alerts()+'<section class="main-card">'+nav()+'<div class="content">'+panel+'</div></section></main>'+
+    '<div class="bottom-banner container"><span>⚽</span><b>¡QUE GANE EL MEJOR!</b><span>🍷</span><b>... Y QUE NO FALTE CHULETÓN</b><span>🥩</span></div><footer class="footer container"><span>CHULETONBET · Luis, Ramón, Ignacio, Mario y Curro</span><span>Datos deportivos: MoviOdds cuando es accesible. No afiliada a Bet365 ni LaLiga. No permite realizar apuestas.</span><span><button class="btn small ghost" data-action="export">⬇ Copia de seguridad</button> <button class="btn small ghost" data-action="import">⬆ Importar copia</button></span></footer>'+manualModal();
+  if(view==='picks'&&search)filterDom();
+}
+function filterDom(){
+  var q=search.toLocaleLowerCase('es');
+  document.querySelectorAll('[data-searchable]').forEach(function(el){el.hidden=!el.getAttribute('data-searchable').includes(q);});
+}
+function canAddPick(p){var f=fixture(p.fixtureId);if(!f||!available(f)||!isLeagueAllowed(f.league,competition))return false;return true;}
+function applyMarket(id,market){
+  if(!selectedPlayer){notify('Selecciona primero tu nombre arriba.','error');return;}
+  var p={fixtureId:Number(id),market:market};if(!canAddPick(p))return;
+  var index=draft.findIndex(function(x){return x.fixtureId===p.fixtureId;});
+  if(index>=0){if(draft[index].market===market)draft.splice(index,1);else draft[index]=p;}
+  else {if(draft.length===4){notify('Ya tienes cuatro partidos. Quita uno para añadir otro.','error');return;}draft.push(p);}
+  render();
+}
+function changePlayer(player){
+  selectedPlayer=player;localStorage.setItem('porra5-player',player);pin='';
+  draft=((data.submissions[player]||{}).picks||[]).slice();
+  ballot=((data.votes[player]||{}).ids||[]).slice();
+  notice='';render();
+}
+function requirePin(callback){
+  if(!selectedPlayer){notify('Selecciona tu nombre antes de continuar.','error');return;}
+  if(!data.pinsRequired){callback('');return;}
+  var entered=window.prompt('PIN personal de '+selectedPlayer+' (si no tienes PIN configurado, déjalo vacío):','');
+  if(entered===null)return;
+  pin=entered;callback(pin);
+}
+function toggleVote(id,which){
+  var array=which==='manual'?manual:ballot;
+  var row=serverRows().find(function(r){return r.id===id;});
+  if(!row)return;
+  var idx=array.indexOf(id);
+  if(idx>=0)array.splice(idx,1);
+  else{
+    if(array.length>=4){notify('Solo puedes seleccionar cuatro propuestas.','error');return;}
+    if(array.some(function(x){var r=serverRows().find(function(a){return a.id===x;});return r&&r.fixtureId===row.fixtureId;})){
+      notify('Selecciona únicamente un pronóstico por partido.','error');return;
+    }
+    array.push(id);
+  }
+  render();
+}
+app.addEventListener('change',function(e){
+  if(e.target.id==='user-choice')changePlayer(e.target.value);
+  if(e.target.id==='admin-secret')adminPin=e.target.value;
+  if(e.target.id==='new-league'&&competition==='liga'){var a=document.getElementById('new-home'),b=document.getElementById('new-away');if(a&&b){a.innerHTML=teamOptions(Number(e.target.value));b.innerHTML=teamOptions(Number(e.target.value));}}
+});
+app.addEventListener('input',function(e){
+  if(e.target.id==='game-search'){search=e.target.value;filterDom();}
+  if(e.target.id==='admin-secret')adminPin=e.target.value;
+});
+app.addEventListener('click',function(event){
+  var t=event.target.closest('[data-action]');if(!t)return;
+  var action=t.dataset.action;
+  if(action==='tab'){view=t.dataset.tab;render();return;}
+  if(action==='competition'){
+    var nextType=safeCompetition(t.dataset.competition);if(nextType===competition)return;
+    competition=nextType;filter='all';search='';modal=false;data=null;load();refreshSource(false);return;
+  }
+  if(action==='go-week'){week=t.dataset.week;competition=safeCompetition(t.dataset.competition);filter='all';search='';data=null;load();refreshSource(false);return;}
+  if(action==='refresh-results'){refreshResults(true);return;}
+  if(action==='refresh-cash'){load();return;}
+  if(action==='manual-result'||action==='clear-result'){
+    var id=String(t.dataset.id),p=allArchivedPicks().find(function(x){return String(x.fixtureId)===id;});
+    if(!p){notify('No se ha encontrado el partido archivado.','error');return;}
+    if(action==='clear-result'){
+      if(!confirm('¿Eliminar el resultado guardado de '+matchNameArchived(p)+'? Volverá a aparecer como pendiente.'))return;
+      delete db.results[id];delete db.resultChecks[id];try{persist();}catch(e){notify(e.message,'error');return;}
+      notify('Marcador eliminado. La selección queda pendiente.');return;
+    }
+    if(!canEnterScore(p)){notify('El partido aún no tiene tiempo suficiente para haber terminado.','error');return;}
+    var previous=finalResult(p),raw=prompt('Resultado FINAL real de '+matchNameArchived(p)+' (local-visitante, por ejemplo 2-1). No pongas marcadores en directo.',previous?previous.homeGoals+'-'+previous.awayGoals:'');
+    if(raw===null)return;
+    var parsed=validFinalScore(raw);
+    if(!parsed){notify('Marcador no válido. Usa el formato 2-1 (máximo 30 goles por equipo).','error');return;}
+    if(!confirm('¿Confirmas que '+matchNameArchived(p)+' YA TERMINÓ con '+parsed.homeGoals+'-'+parsed.awayGoals+'? Aparecerá identificado como resultado manual.'))return;
+    db.results[id]={status:'finished',homeGoals:parsed.homeGoals,awayGoals:parsed.awayGoals,source:'manual',at:new Date().toISOString(),updatedBy:selectedPlayer||'Anónimo'};
+    try{persist();}catch(e){notify(e.message,'error');return;}
+    notify('Marcador final manual guardado. Aciertos y fallos recalculados.');return;
+  }
+  if(action==='manual-odds'){
+    if(!data.publication.open){notify('Esta edición ya no admite cambios en las cuotas.','error');return;}
+    var fid=String(t.dataset.id),f=fixture(fid);if(!f)return;
+    var prev=localWeek(week,competition).manualOdds[fid]||{};
+    var message='CUOTAS EN ORDEN: local ; empate ; visitante ; ambos marcan SÍ ; ambos marcan NO.\nDeja un apartado vacío si no conoces su cuota.\nUsa punto o coma decimal, separando los valores con punto y coma.\nEstas cuotas se mostrarán como MANUALES, no verificadas por el proveedor.';
+    var raw=window.prompt(message,codes.map(function(c){return prev[c]||'';}).join('; '));if(raw===null)return;
+    var parts=raw.split(';');if(parts.length!==5){notify('Necesitas cinco campos separados por punto y coma (;).','error');return;}
+    var record={};for(var i=0;i<5;i++){var v=parts[i].trim().replace(',','.');if(!v)continue;if(!/^\d+(\.\d{1,3})?$/.test(v)||!validOdd(v)){notify('La cuota '+(i+1)+' no es válida. Usa cuotas mayores que 1.','error');return;}record[codes[i]]=Number(v);}
+    localWeek(week,competition).manualOdds[fid]=record;try{persist();}catch(e){notify(e.message,'error');return;}load();return;
+  }
+  if(action==='add-fixture'){
+    var league=Number(document.getElementById('new-league').value),home=document.getElementById('new-home').value.trim(),away=document.getElementById('new-away').value.trim(),date=document.getElementById('new-date').value;
+    if(!canAddManualFixture(week,competition)){notify('Esta edición no está abierta para añadir partidos.','error');return;}
+    if(!isLeagueAllowed(league,competition)||!date||home.length<2||away.length<2||home.length>90||away.length>90||normalized(home)===normalized(away)||
+      (competition==='liga'&&(!TEAM_NAMES[league]||!TEAM_NAMES[league].includes(home)||!TEAM_NAMES[league].includes(away)))){
+      notify('Revisa los equipos, la competición y la fecha real.','error');return;
+    }
+    var start=new Date(date).toISOString();if(!inEdition({start:start},week,competition)){notify('La fecha debe estar dentro de la semana mostrada.','error');return;}
+    if(weekFixtures(week,competition).some(function(f){return normalized(f.home)===normalized(home)&&normalized(f.away)===normalized(away);})){notify('Ese partido ya aparece en la semana.','error');return;}
+    localWeek(week,competition).fixtures.push({id:Date.now(),league:league,home:home,away:away,start:start,source:'manual'});
+    try{persist();}catch(e){notify(e.message,'error');return;}notice='Partido registrado localmente. Añade cuotas solo si las has consultado.';noticeType='success';load();return;
+  }
+  if(action==='delete-fixture'){
+    if(!canAddManualFixture(week,competition)){notify('No se pueden quitar partidos fuera de la ventana de esta edición.','error');return;}
+    var fid=Number(t.dataset.id),used=Object.values(localWeek(week,competition).submissions).some(function(s){return (s.picks||[]).some(function(p){return p.fixtureId===fid;});});if(used){notify('Este partido ya tiene pronósticos guardados; no se puede borrar.','error');return;}
+    if(!confirm('¿Quitar este partido manual de esta semana?'))return;
+    localWeek(week,competition).fixtures=localWeek(week,competition).fixtures.filter(function(f){return f.id!==fid;});delete localWeek(week,competition).manualOdds[String(fid)];persist();load();return;
+  }
+  if(action==='refresh-odds'){refreshSource(true);notice='Consultando las cuotas públicas…';noticeType='success';render();return;}
+  if(action==='export'){var text=JSON.stringify({version:1,createdAt:new Date().toISOString(),database:db},null,2),blob=new Blob([text],{type:'application/json'}),u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='copia-chuletonbet.json';a.click();setTimeout(function(){URL.revokeObjectURL(u);},1000);return;}
+  if(action==='import'){var input=document.createElement('input');input.type='file';input.accept='.json,application/json';input.onchange=function(){var f=input.files[0];if(!f)return;f.text().then(function(raw){var obj=JSON.parse(raw);if(obj.version!==1||!obj.database||!obj.database.weeks)throw new Error('Formato de copia no reconocido.');if(!confirm('¿Sustituir los datos locales actuales por esta copia?'))return;db=obj.database;if(!db.results||typeof db.results!=='object')db.results={};if(!db.resultChecks||typeof db.resultChecks!=='object')db.resultChecks={};persist();initializedWeek='';load();}).catch(function(e){notify('No se pudo importar: '+e.message,'error');});};input.click();return;}
+
+
+  if(action==='save-cash'){var cashField=document.getElementById('cash-amount');if(!cashField)return;cashDraft=cashField.value;post('/api/cash',{amount:cashDraft,player:selectedPlayer||null});return;}
+  if(action==='dismiss'){notice='';render();return;}
+  if(action==='filter'){filter=t.dataset.filter;render();return;}
+  if(action==='prev'||action==='next'){
+    var n=action==='prev'?-7:7;
+    var next=addDays(week,n),days=(Date.parse(next+'T12:00:00Z')-Date.parse(mondayISO(todayMadrid())+'T12:00:00Z'))/86400000;
+    if(days< -28||days>77){notify('No hay más semanas disponibles en esta dirección.','error');return;}
+    week=next;search='';data=null;load();return;
+  }
+  if(action==='market'){applyMarket(t.dataset.id,t.dataset.market);return;}
+  if(action==='remove'){draft.splice(Number(t.dataset.index),1);render();return;}
+  if(action==='reset'){draft=((data.submissions[selectedPlayer]||{}).picks||[]).slice();render();return;}
+  if(action==='submit'){
+    if(!data.publication.open||draft.length!==4)return;
+    requirePin(function(secret){post('/api/submission',{week:week,competition:competition,player:selectedPlayer,pin:secret,picks:draft});});return;
+  }
+  if(action==='vote-toggle'){if(!selectedPlayer){notify('Selecciona tu nombre para votar.','error');return;}toggleVote(t.dataset.id,'ballot');return;}
+  if(action==='submit-vote'){
+    requirePin(function(secret){post('/api/vote',{week:week,competition:competition,player:selectedPlayer,pin:secret,ids:ballot});});return;
+  }
+  if(action==='fix-auto'){if(!data.publication.open||!data.consensus.complete||data.consensus.fixed)return;post('/api/fix',{week:week,competition:competition,ids:data.consensus.selected.slice()});return;}
+  if(action==='manual-mode'){manual=(data.consensus.selected||[]).slice();modal=true;render();return;}
+  if(action==='manual-toggle'){toggleVote(t.dataset.id,'manual');return;}
+  if(action==='close-modal'){modal=false;render();return;}
+  if(action==='submit-fix'){if(data.publication.open&&manual.length===4){modal=false;post('/api/fix',{week:week,competition:competition,adminPin:adminPin,ids:manual});}return;}
+  if(action==='unfix'){if(!confirm('¿Desfijar esta combinada? Se quitará del historial hasta que se vuelva a fijar.'))return;modal=false;post('/api/unfix',{week:week,competition:competition,adminPin:adminPin});return;}
+});
+load();
+// El HTML funciona al instante, incluso sin internet; la consulta remota va en paralelo.
+refreshSource(false);
+setInterval(function(){if(document.visibilityState==='visible'&&!busy&&data){
+  // Actualizar datos públicos en segundo plano; conservar el borrador y la papeleta del usuario.
+  if(Date.now()-(remote.updatedAt||0)>12*60000)refreshSource(false);
+  refreshResults(false);
+  request('/api/state?week='+encodeURIComponent(week)+'&competition='+encodeURIComponent(competition)).then(function(fresh){data=fresh;render();}).catch(function(){/* Sin conexión: conservar vista previa. */});
+}},120000);
+})();
+</script>
+</body>
+</html>
