@@ -619,16 +619,154 @@ var TEAM_NAMES = {
 var ALL_TEAMS = [140,141].flatMap(function(league){return TEAM_NAMES[league].map(function(name){return {league:league,name:name,logo:''};});});
 var DB_KEY='porra5:local:2026:v1', SOURCE_KEY='porra5:remote:2026:v1';
 function storeRead(key,fallback){try{return JSON.parse(localStorage.getItem(key))||fallback;}catch(_){return fallback;}}
-function storeWrite(key,value){try{localStorage.setItem(key,JSON.stringify(value));return true;}catch(e){return false;}}
-var db=storeRead(DB_KEY,{weeks:{},cash:null});
-if(!db.weeks||typeof db.weeks!=='object')db.weeks={};
-if(!db.results||typeof db.results!=='object')db.results={};
-if(!db.resultChecks||typeof db.resultChecks!=='object')db.resultChecks={};
+// El almacenamiento local antiguo se conserva SOLO para una migración manual.
+var legacyDb=storeRead(DB_KEY,null);
+var db={weeks:{},cash:null,results:{},resultChecks:{}};
+var commonBase=JSON.parse(JSON.stringify(db));
+var commonReady=false,commonSyncError='',writeQueue=Promise.resolve(),editingPin='',commitsPending=0;
+function cleanDB(value){
+ var v=value&&typeof value==='object'&&!Array.isArray(value)?value:{};
+ return {weeks:v.weeks&&typeof v.weeks==='object'?v.weeks:{},cash:v.cash||null,results:v.results&&typeof v.results==='object'?v.results:{},resultChecks:v.resultChecks&&typeof v.resultChecks==='object'?v.resultChecks:{}};
+}
+function copyJSON(obj){return JSON.parse(JSON.stringify(obj));}
+function isObject(obj){return obj!==null&&typeof obj==='object'&&!Array.isArray(obj);}
+// Permite importar una copia de cada amigo sin borrar lo guardado por los demás.
+function mergeBackup(backup){
+ var incoming=cleanDB(backup);
+ Object.keys(incoming.weeks).forEach(function(k){
+   if(!/^\d{4}-\d{2}-\d{2}(\|europa)?$/.test(k))return;
+   var orig=incoming.weeks[k];if(!isObject(orig))return;
+   var target=db.weeks[k]||(db.weeks[k]={submissions:{},votes:{},fixed:null,fixtures:[],manualOdds:{}});
+   ['submissions','votes'].forEach(function(group){
+     if(!isObject(target[group]))target[group]={};
+     Object.keys(orig[group]||{}).forEach(function(player){
+       if(!players.includes(player))return;
+       var record=orig[group][player],existing=target[group][player];
+       if(!record||typeof record!=='object')return;
+       if(!existing||Date.parse(record.at||0)>Date.parse(existing.at||0))target[group][player]=copyJSON(record);
+     });
+   });
+   if(!isObject(target.manualOdds))target.manualOdds={};
+   Object.keys(orig.manualOdds||{}).forEach(function(id){
+     if(!/^\d+$/.test(id))return;
+     target.manualOdds[id]=Object.assign({},target.manualOdds[id]||{},orig.manualOdds[id]||{});
+   });
+   if(!Array.isArray(target.fixtures))target.fixtures=[];
+   (orig.fixtures||[]).forEach(function(f){
+     if(f&&Number.isSafeInteger(f.id)&&!target.fixtures.some(function(g){return g.id===f.id;}))target.fixtures.push(copyJSON(f));
+   });
+   var oldTime=Date.parse(orig.ticket&&orig.ticket.fixedAt||orig.fixed&&orig.fixed.at||0);
+   var presentTime=Date.parse(target.ticket&&target.ticket.fixedAt||target.fixed&&target.fixed.at||0);
+   if(orig.fixed&&(!target.fixed||oldTime>presentTime)){
+     target.fixed=copyJSON(orig.fixed);
+     if(orig.ticket)target.ticket=copyJSON(orig.ticket);
+   }
+ });
+ if(incoming.cash&&Number.isSafeInteger(incoming.cash.cents)&&(!db.cash||Date.parse(incoming.cash.at||0)>Date.parse(db.cash.at||0)))db.cash=copyJSON(incoming.cash);
+ Object.keys(incoming.results).forEach(function(id){
+   if(!/^\d+$/.test(id))return;
+   var result=incoming.results[id],existing=db.results[id];
+   if(!result||typeof result!=='object')return;
+   if(!existing||Date.parse(result.at||0)>Date.parse(existing.at||0))db.results[id]=copyJSON(result);
+ });
+}
+function equalJSON(a,b){return JSON.stringify(a)===JSON.stringify(b);}
+// Cambios por campo: los votos de Mario no pisan los de Luis, aunque se guarden a la vez.
+function changesBetween(before,after,path,ops){
+ path=path||[];ops=ops||[];
+ // Caja y cada marcador se escriben completos para mantener el registro coherente.
+ if((path.length===1&&path[0]==='cash')||(path.length===2&&path[0]==='results')){
+   if(!equalJSON(before,after))ops.push({type:'set',path:path.slice(),value:after});
+   return ops;
+ }
+ if(path.length===3&&path[0]==='weeks'&&path[2]==='fixtures'&&Array.isArray(before)&&Array.isArray(after)){
+   var oldMap=new Map(before.map(function(f){return [f.id,f];})),newMap=new Map(after.map(function(f){return [f.id,f];}));
+   newMap.forEach(function(f,id){if(!equalJSON(oldMap.get(id),f))ops.push({type:'fixture-upsert',path:path.slice(),value:f});});
+   oldMap.forEach(function(f,id){if(!newMap.has(id))ops.push({type:'fixture-remove',path:path.slice(),id:id});});
+   return ops;
+ }
+ if(isObject(before)&&isObject(after)){
+   var keys=new Set(Object.keys(before).concat(Object.keys(after)));
+   keys.forEach(function(key){
+     if(!Object.prototype.hasOwnProperty.call(after,key))ops.push({type:'delete',path:path.concat(key)});
+     else if(!Object.prototype.hasOwnProperty.call(before,key)){
+       if(after[key]===null&&path.length===2&&path[0]==='weeks')return; // Evitar sobrescribir una combinada fijada por otro móvil.
+       if(isObject(after[key]))changesBetween({},after[key],path.concat(key),ops);
+       else if(Array.isArray(after[key])&&path.concat(key).length===3&&key==='fixtures')changesBetween([],after[key],path.concat(key),ops);
+       else ops.push({type:'set',path:path.concat(key),value:after[key]});
+     }else changesBetween(before[key],after[key],path.concat(key),ops);
+   });
+ }else if(!equalJSON(before,after))ops.push({type:'set',path:path.slice(),value:after});
+ return ops;
+}
+function applyChangesLocally(target,ops){
+ ops.forEach(function(op){
+   var cursor=target,p=op.path;
+   for(var i=0;i<p.length-1;i++){
+     if(!isObject(cursor[p[i]]))cursor[p[i]]={};
+     cursor=cursor[p[i]];
+   }
+   var key=p[p.length-1];
+   if(op.type==='set')cursor[key]=copyJSON(op.value);
+   else if(op.type==='delete')delete cursor[key];
+   else{
+     if(!Array.isArray(cursor[key]))cursor[key]=[];
+     if(op.type==='fixture-upsert'){
+       var idx=cursor[key].findIndex(function(f){return f.id===op.value.id;});
+       if(idx<0)cursor[key].push(copyJSON(op.value));else cursor[key][idx]=copyJSON(op.value);
+     }else cursor[key]=cursor[key].filter(function(f){return f.id!==op.id;});
+   }
+ });
+}
+async function commonRequest(path,options){
+ var response=await fetch(path,options||{cache:'no-store'}),body;
+ try{body=await response.json();}catch(_){throw new Error('Render no está devolviendo datos JSON. Comprueba que es un Web Service y que tiene DATABASE_URL.');}
+ if(!response.ok){
+   var err=new Error(body.error||'Error de conexión '+response.status);err.status=response.status;
+   err.pinRequired=!!body.pinRequired;throw err;
+ }
+ return body;
+}
+async function sendPatch(ops){
+ async function send(){return commonRequest('/api/patch',{method:'POST',headers:{'content-type':'application/json','x-club-pin':editingPin},body:JSON.stringify({ops:ops}),cache:'no-store'});}
+ try{return await send();}catch(err){
+   if(!err.pinRequired)throw err;
+   var entered=window.prompt('Código de edición de ChuletonBet (el que habéis configurado en Render):','');
+   if(entered===null)throw new Error('Guardado cancelado: no se ha introducido el código.');
+   editingPin=entered;
+   return send();
+ }
+}
+// Todos los guardados viajan a PostgreSQL y se confirman ANTES de anunciar éxito.
+function persist(){
+ if(!commonReady)return Promise.reject(new Error('La base de datos común todavía no está conectada.'));
+ commitsPending++;
+ var job=writeQueue.then(async function(){
+   var ops=changesBetween(commonBase,db);
+   if(!ops.length)return;
+   var sent=copyJSON(db),result=await sendPatch(ops);
+   var newLocalChanges=changesBetween(sent,db);
+   commonBase=cleanDB(result.database);
+   db=copyJSON(commonBase);
+   applyChangesLocally(db,newLocalChanges);
+   commonSyncError='';
+ });
+ writeQueue=job.catch(function(e){commonSyncError=e.message;}).finally(function(){commitsPending--;});
+ return job;
+}
+async function syncFromCommon(){
+ await writeQueue;
+ if(commonReady&&changesBetween(commonBase,db).length)await persist();
+ var current=await commonRequest('/api/database',{cache:'no-store'});
+ db=cleanDB(current.database);
+ commonBase=copyJSON(db);
+ commonReady=true;commonSyncError='';
+}
 var remote=storeRead(SOURCE_KEY,{fixtures:[],odds:{},oddsUpdated:null,updatedAt:0,source:null});
 var sourceError='';var sourceFetching=false;var sourcePromise=null;
 var resultError='';var resultsBusy=false;var resultsPromise=null;
 function localWeek(w,type){var k=weekKey(w,type);if(!db.weeks[k])db.weeks[k]={submissions:{},votes:{},fixed:null,fixtures:[],manualOdds:{}};var b=db.weeks[k];b.submissions=b.submissions||{};b.votes=b.votes||{};b.fixtures=b.fixtures||[];b.manualOdds=b.manualOdds||{};return b;}
-function persist(){if(!storeWrite(DB_KEY,db))throw new Error('No se pudo guardar: almacenamiento local lleno o bloqueado.');}
+
 function validOdd(x){var v=Number(x);return Number.isFinite(v)&&v>1&&v<100000?v:null;}
 function normalized(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();}
 function leagueOf(s){var t=normalized(s);if(!/spain|espana|laliga/.test(t)||/rfef|femeni|femenin|women|woman|youth|u19|u21|u23|friendly|cup|copa|tercera/.test(t))return 0;if(/segunda|hypermotion|la liga 2|laliga2/.test(t))return 141;if(/primera|la liga|laliga|ea sports/.test(t))return 140;return 0;}
@@ -713,11 +851,11 @@ function buildState(w,type){type=safeCompetition(type);var b=localWeek(w,type),f
 if(b.fixed&&!b.ticket&&Array.isArray(b.fixed.ids)&&b.fixed.ids.length===4){
   var rows=b.fixed.ids.map(function(id){return ranking.find(function(r){return r.id===id;});});
   if(rows.every(Boolean)&&new Set(rows.map(function(r){return r.fixtureId;})).size===4){
-    try{b.ticket=frozenTicket(w,type,ranking,b.fixed.ids,f,weekOdds(w,f,type));b.ticket.fixedAt=b.fixed.at||b.ticket.fixedAt;persist();}catch(_){b.ticket=null;}
+    try{b.ticket=frozenTicket(w,type,ranking,b.fixed.ids,f,weekOdds(w,f,type));b.ticket.fixedAt=b.fixed.at||b.ticket.fixedAt;persist().catch(function(e){commonSyncError=e.message;});}catch(_){b.ticket=null;}
   }
 }
 players.forEach(function(p){var rec=b.submissions[p];(rec&&rec.picks||[]).forEach(function(x){if(validOdd(x.savedOdd))saved[String(x.fixtureId)+':'+x.market]=Number(x.savedOdd);});});var warnings=[];if(sourceError)warnings.push(sourceError);if(!f.length&&sourceFetching)warnings.push('Consultando partidos y cuotas sin registro…');
-return {week:w,competition:type,publication:publication(w,type,f),currentWeek:mondayISO(todayMadrid()),players:players,configured:true,persistent:false,pinsRequired:false,adminEnabled:true,oddsCacheHours:0.2,fixtures:f,teams:ALL_TEAMS,odds:weekOdds(w,f,type),oddsUpdated:remote.oddsUpdated,warnings:warnings,cash:db.cash||{cents:null,updatedBy:null,at:null},archivedOdds:saved,submissions:b.submissions,votes:b.votes,ranking:ranking,ticket:b.ticket||null,consensus:b.ticket?{selected:b.ticket.selections.map(function(p){return String(p.fixtureId)+':'+p.market;}),pending:[],fixed:true,complete:true,fixedAt:b.ticket.fixedAt}:consensusOf(ranking,b.fixed),generatedAt:new Date().toISOString()};}
+return {week:w,competition:type,publication:publication(w,type,f),currentWeek:mondayISO(todayMadrid()),players:players,configured:true,persistent:true,pinsRequired:false,adminEnabled:true,oddsCacheHours:0.2,fixtures:f,teams:ALL_TEAMS,odds:weekOdds(w,f,type),oddsUpdated:remote.oddsUpdated,warnings:warnings,cash:db.cash||{cents:null,updatedBy:null,at:null},archivedOdds:saved,submissions:b.submissions,votes:b.votes,ranking:ranking,ticket:b.ticket||null,consensus:b.ticket?{selected:b.ticket.selections.map(function(p){return String(p.fixtureId)+':'+p.market;}),pending:[],fixed:true,complete:true,fixedAt:b.ticket.fixedAt}:consensusOf(ranking,b.fixed),generatedAt:new Date().toISOString()};}
 // Las selecciones fijadas se congelan con equipos, fecha y cuota. El historial
 // no depende de que el proveedor continúe publicando los partidos antiguos.
 function archiveTickets(){
@@ -809,7 +947,7 @@ async function refreshResults(force){
       }
     }
     await Promise.all([worker(),worker(),worker()]);
-    try{persist();}catch(e){resultError=e.message;}
+    try{await persist();}catch(e){resultError=e.message;}
     if(force&&!failed)resultError=updated?'Se han incorporado '+updated+' nuevo(s) resultado(s) confirmado(s).':'No hay resultados finales nuevos para las selecciones consultadas.';
   })().finally(function(){resultsBusy=false;resultsPromise=null;render();});
   return resultsPromise;
@@ -869,15 +1007,15 @@ async function request(url,options){
  if(url.indexOf('/api/state')===0){var p=new URLSearchParams(url.split('?')[1]||''),w=p.get('week')||week;return buildState(w,p.get('competition')||competition);}
  var body=options&&options.body?JSON.parse(options.body):{},path=url;
  if(path==='/api/cash'){
-   var cents=parseAmount(body.amount);db.cash={cents:cents,updatedBy:players.includes(body.player)?body.player:'Anónimo',at:new Date().toISOString()};persist();return {ok:true,message:'¡Caja actualizada en este navegador!',cash:db.cash};
+   var cents=parseAmount(body.amount);db.cash={cents:cents,updatedBy:players.includes(body.player)?body.player:'Anónimo',at:new Date().toISOString()};await persist();return {ok:true,message:'¡Caja actualizada para todos!',cash:db.cash};
  }
  var w=body.week||week,type=safeCompetition(body.competition||competition),b=localWeek(w,type);
  if(path==='/api/submission'){
   if(!players.includes(body.player))throw new Error('Selecciona primero tu nombre.');validatePicks(body.picks,w,type);
-  var odds=weekOdds(w,weekFixtures(w,type),type);b.submissions[body.player]={picks:body.picks.map(function(p){return {fixtureId:p.fixtureId,market:p.market,savedOdd:validOdd(odds[String(p.fixtureId)]&&odds[String(p.fixtureId)][p.market])};}),at:new Date().toISOString()};persist();return {ok:true,message:'Tus cuatro pronósticos están guardados localmente.'};
+  var odds=weekOdds(w,weekFixtures(w,type),type);b.submissions[body.player]={picks:body.picks.map(function(p){return {fixtureId:p.fixtureId,market:p.market,savedOdd:validOdd(odds[String(p.fixtureId)]&&odds[String(p.fixtureId)][p.market])};}),at:new Date().toISOString()};await persist();return {ok:true,message:'Tus cuatro pronósticos están guardados para todos.'};
  }
  if(path==='/api/vote'){
-  if(!players.includes(body.player))throw new Error('Selecciona tu nombre.');validateBallot(body.ids,w,type);b.votes[body.player]={ids:body.ids,at:new Date().toISOString()};persist();return {ok:true,message:'Tu votación está guardada localmente.'};
+  if(!players.includes(body.player))throw new Error('Selecciona tu nombre.');validateBallot(body.ids,w,type);b.votes[body.player]={ids:body.ids,at:new Date().toISOString()};await persist();return {ok:true,message:'Tu votación está guardada para todos.'};
  }
  if(path==='/api/fix'){
   if(!publication(w,type,weekFixtures(w,type)).open)throw new Error('Esta quiniela está fuera de su periodo de publicación.');
@@ -885,14 +1023,15 @@ async function request(url,options){
   var selected=body.ids.map(function(k){return byId.get(k);});if(selected.some(function(r){return !r;})||new Set(selected.map(function(r){return r.fixtureId;})).size!==4)throw new Error('Debes seleccionar cuatro partidos diferentes.');
   if(selected.some(function(r){return !canEditFixture(state.fixtures.find(function(f){return f.id===r.fixtureId;}),w,type);}))throw new Error('No se pueden fijar partidos ya comenzados.');
   b.ticket=frozenTicket(w,type,state.ranking,body.ids,state.fixtures,state.odds);
-  b.fixed={ids:body.ids,at:b.ticket.fixedAt};persist();return {ok:true,message:'¡Combinada de ChuletonBet fijada y archivada! Ya aparecerá arriba y en el historial.'};
+  b.fixed={ids:body.ids,at:b.ticket.fixedAt};await persist();return {ok:true,message:'¡Combinada fijada y archivada para todos! Ya aparece en el historial común.'};
  }
- if(path==='/api/unfix'){b.fixed=null;b.ticket=null;persist();return {ok:true,message:'Combinada desfijada y retirada del historial.'};}
+ if(path==='/api/unfix'){b.fixed=null;b.ticket=null;await persist();return {ok:true,message:'Combinada desfijada y retirada del historial común.'};}
  throw new Error('Ruta desconocida: '+path);
 }
 async function load(){
   busy=true;
   try{
+    await syncFromCommon();
     var fresh=await request('/api/state?week='+encodeURIComponent(week)+'&competition='+encodeURIComponent(competition));
     data=fresh;
     if(initializedWeek!==weekKey(week,competition)){
@@ -901,7 +1040,7 @@ async function load(){
       manual=(data.consensus.selected||[]).slice();
       initializedWeek=weekKey(week,competition);
     }
-  }catch(e){notice='No se pudieron cargar los datos: '+e.message;noticeType='error';}
+  }catch(e){notice='No se pudieron cargar los datos compartidos: '+e.message;noticeType='error';}
   finally{busy=false;render();if(data)refreshResults(false);}
 }
 async function post(url,body){
@@ -916,7 +1055,7 @@ async function post(url,body){
 }
 function header(){
   var amount=data&&data.cash&&data.cash.cents;
-  return '<div class="retro-strip"><div class="container strip-inner"><span>★ CHULETONBET ★ EL CLUB DE LOS CINCO ★</span><span>EST. 2000 · REABIERTO COMO CHULETONBET</span><span class="strip-blink">● MODO LOCAL</span></div></div>'+
+  return '<div class="retro-strip"><div class="container strip-inner"><span>★ CHULETONBET ★ EL CLUB DE LOS CINCO ★</span><span>EST. 2000 · REABIERTO COMO CHULETONBET</span><span class="strip-blink">● DATOS COMPARTIDOS</span></div></div>'+
   '<header class="top"><div class="container top-inner"><div class="logo"><div class="logo-mark"><span>⚽</span><small>CLUB 5</small></div><div><span class="logo-title">CHULETON<i>BET</i></span><span class="logo-sub">🍷 VINO &nbsp;✦&nbsp; ⚽ FÚTBOL &nbsp;✦&nbsp; 🥩 CHULETÓN</span></div></div>'+
   '<div class="session"><span class="pill desktop">EDICIÓN '+esc(week.slice(0,4))+'</span><button class="cash-shortcut" data-action="tab" data-tab="cash" aria-label="Abrir la Caja compartida">💰 <strong>CAJA</strong> <span>'+esc(Number.isSafeInteger(amount)?euros(amount):'VER SALDO')+'</span></button><label class="player-label">TÚ ERES <select class="player-select" id="user-choice" aria-label="Selecciona tu participante"><option value="">¿Quién eres?</option>'+players.map(function(p){return '<option value="'+esc(p)+'" '+(selectedPlayer===p?'selected':'')+'>'+esc(p)+'</option>';}).join('')+'</select></label></div></div></header>';
 }
@@ -942,7 +1081,7 @@ function hero(){
 function alerts(){
   var out='';
   if(notice)out+='<div class="alert '+(noticeType==='success'?'success':'')+'" role="status">'+esc(notice)+' <button class="btn small ghost" data-action="dismiss" style="float:right">Cerrar</button></div>';
-  if(data && !data.persistent)out+='<div class="alert warn">💾 <b>VERSIÓN HTML LOCAL:</b> pronósticos, votos y Caja se guardan únicamente en este navegador. Si abres la web en cinco móviles distintos, <b>NO se sincronizarán</b>. Para compartirla en directo hará falta un servidor o base de datos común.</div>';
+  if(commonSyncError)out+='<div class="alert warn">⚠ Error de sincronización: '+esc(commonSyncError)+'. No se ha confirmado el guardado. Reintenta la acción cuando vuelva la conexión.</div>';
   (data&&data.warnings||[]).forEach(function(s){out+='<div class="alert warn">⚠ '+esc(s)+'</div>';});
   if(data&&data.oddsUpdated)out+='<div class="legend">Cuotas de prepartido obtenidas de MoviOdds (fuente independiente que atribuye sus precios a Bet365) · última consulta: '+esc(fmtDate(data.oddsUpdated,{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}))+' · actualización aproximada cada 12 min · si ya no hay cuota prepartido, se muestra la última archivada disponible · importes orientativos, no garantizados.</div>';
   return out;
@@ -1082,7 +1221,7 @@ function historyPanel(){
         return '<div class="result-admin-row"><span><b>'+esc(matchNameArchived(p))+'</b><small>'+esc(fmtDate(p.start))+' · '+esc(score)+(r?' ('+(r.source==='manual'?'manual':'MoviOdds')+')':'')+'</small></span><div>'+ 
           '<button class="btn small" data-action="manual-result" data-id="'+esc(p.fixtureId)+'" '+(done?'':'disabled title="El partido aún no ha terminado"')+'>✍️ EDITAR MARCADOR FINAL</button>'+
           (r?'<button class="btn small ghost" data-action="clear-result" data-id="'+esc(p.fixtureId)+'">BORRAR</button>':'')+'</div></div>';
-      }).join('')+'</div><p>Un marcador manual no es una verificación automática. Solo introdúcelo después de comprobar el resultado final real. Se guardará en este navegador.</p></details>';}).join('')+'</div>':empty('🧾','Aún no hay quinielas grupales fijadas. Cuando tengáis cuatro selecciones, pulsad «Fijar combinada» desde Coincidencias. Aparecerán aquí para siempre mientras conservéis los datos de este navegador.'));
+      }).join('')+'</div><p>Un marcador manual no es una verificación automática. Solo introdúcelo después de comprobar el resultado final real. Se guardará para todos los participantes.</p></details>';}).join('')+'</div>':empty('🧾','Aún no hay quinielas grupales fijadas. Cuando tengáis cuatro selecciones, pulsad «Fijar combinada» desde Coincidencias. Aparecerán aquí para siempre en la base de datos compartida.'));
 }
 function votePanel(){
   var items=serverRows();
@@ -1122,19 +1261,19 @@ function teamsPanel(){
 function manualModal(){
   if(!modal)return '';
   var rows=serverRows();
-  return '<div class="overlay"><div class="modal" style="max-width:520px;max-height:90vh;overflow:auto"><h2>Desempate manual</h2><p>Selecciona cuatro propuestas de partidos diferentes. En esta versión local no hay PIN de administrador.</p>'+
+  return '<div class="overlay"><div class="modal" style="max-width:520px;max-height:90vh;overflow:auto"><h2>Desempate manual</h2><p>Selecciona cuatro propuestas de partidos diferentes. Los cambios se guardan en la base de datos común. Para proteger las modificaciones, podéis definir WRITE_PIN en Render.</p>'+
     rows.map(function(r){
       var checked=manual.includes(r.id);
       return '<div class="vote-choice '+(checked?'selected':'')+'"><button data-action="manual-toggle" data-id="'+esc(r.id)+'"><span class="check">'+(checked?'✓':'')+'</span><span class="body"><b>'+esc(nameMatch(r))+'</b><small>'+esc(label(rowToPick(r)))+'</small></span></button></div>';
     }).join('')+
-    '<input type="password" id="admin-secret" placeholder="PIN del administrador" value="'+esc(adminPin)+'"><div class="modal-actions"><button class="btn primary" data-action="submit-fix" '+(manual.length!==4?'disabled':'')+'>Fijar los 4</button><button class="btn ghost" data-action="close-modal">Cancelar</button></div>'+
+    '<div class="modal-actions"><button class="btn primary" data-action="submit-fix" '+(manual.length!==4?'disabled':'')+'>Fijar los 4</button><button class="btn ghost" data-action="close-modal">Cancelar</button></div>'+
     (data.consensus.fixed?'<button class="btn danger" style="margin-top:12px;width:100%" data-action="unfix">Quitar selección manual</button>':'')+'</div></div>';
 }
 function render(){
-  if(!data){app.innerHTML='<div class="container" style="padding-top:110px;text-align:center"><span class="spin"></span><p style="color:#7B112C">Cargando ChuletonBet...</p></div>';return;}
+  if(!data){app.innerHTML='<div class="container" style="padding-top:110px;text-align:center">'+(notice?'<div class="alert warn">'+esc(notice)+'<p>Comprueba que Render está configurado como Web Service y que DATABASE_URL apunta a PostgreSQL.</p></div>':'<span class="spin"></span><p style="color:#7B112C">Cargando ChuletonBet compartido...</p>')+'</div>';return;}
   var panel=({picks:picksPanel,rank:rankingPanel,vote:votePanel,history:historyPanel,people:peoplePanel,teams:teamsPanel,cash:cashPanel})[view]();
   app.innerHTML=header()+'<main class="container">'+featuredTicket()+hero()+competitionSwitch()+alerts()+'<section class="main-card">'+nav()+'<div class="content">'+panel+'</div></section></main>'+
-    '<div class="bottom-banner container"><span>⚽</span><b>¡QUE GANE EL MEJOR!</b><span>🍷</span><b>... Y QUE NO FALTE CHULETÓN</b><span>🥩</span></div><footer class="footer container"><span>CHULETONBET · Luis, Ramón, Ignacio, Mario y Curro</span><span>Datos deportivos: MoviOdds cuando es accesible. No afiliada a Bet365 ni LaLiga. No permite realizar apuestas.</span><span><button class="btn small ghost" data-action="export">⬇ Copia de seguridad</button> <button class="btn small ghost" data-action="import">⬆ Importar copia</button></span></footer>'+manualModal();
+    '<div class="bottom-banner container"><span>⚽</span><b>¡QUE GANE EL MEJOR!</b><span>🍷</span><b>... Y QUE NO FALTE CHULETÓN</b><span>🥩</span></div><footer class="footer container"><span>CHULETONBET · Luis, Ramón, Ignacio, Mario y Curro</span><span>Datos deportivos: MoviOdds cuando es accesible. No afiliada a Bet365 ni LaLiga. No permite realizar apuestas.</span><span><button class="btn small ghost" data-action="export">⬇ Copia de seguridad</button> <button class="btn small ghost" data-action="import">⬆ Importar copia</button>'+(legacyDb&&Object.keys(legacyDb.weeks||{}).length?'<button class="btn small ghost" data-action="import-legacy">↥ Recuperar datos de este navegador</button>':'')+'</span></footer>'+manualModal();
   if(view==='picks'&&search)filterDom();
 }
 function filterDom(){
@@ -1203,8 +1342,7 @@ app.addEventListener('click',function(event){
     if(!p){notify('No se ha encontrado el partido archivado.','error');return;}
     if(action==='clear-result'){
       if(!confirm('¿Eliminar el resultado guardado de '+matchNameArchived(p)+'? Volverá a aparecer como pendiente.'))return;
-      delete db.results[id];delete db.resultChecks[id];try{persist();}catch(e){notify(e.message,'error');return;}
-      notify('Marcador eliminado. La selección queda pendiente.');return;
+      delete db.results[id];delete db.resultChecks[id];persist().then(function(){load();notify('Marcador eliminado en todos los dispositivos.');}).catch(function(e){notify(e.message,'error');});return;
     }
     if(!canEnterScore(p)){notify('El partido aún no tiene tiempo suficiente para haber terminado.','error');return;}
     var previous=finalResult(p),raw=prompt('Resultado FINAL real de '+matchNameArchived(p)+' (local-visitante, por ejemplo 2-1). No pongas marcadores en directo.',previous?previous.homeGoals+'-'+previous.awayGoals:'');
@@ -1213,8 +1351,7 @@ app.addEventListener('click',function(event){
     if(!parsed){notify('Marcador no válido. Usa el formato 2-1 (máximo 30 goles por equipo).','error');return;}
     if(!confirm('¿Confirmas que '+matchNameArchived(p)+' YA TERMINÓ con '+parsed.homeGoals+'-'+parsed.awayGoals+'? Aparecerá identificado como resultado manual.'))return;
     db.results[id]={status:'finished',homeGoals:parsed.homeGoals,awayGoals:parsed.awayGoals,source:'manual',at:new Date().toISOString(),updatedBy:selectedPlayer||'Anónimo'};
-    try{persist();}catch(e){notify(e.message,'error');return;}
-    notify('Marcador final manual guardado. Aciertos y fallos recalculados.');return;
+    persist().then(function(){load();notify('Marcador final manual guardado para todos.');}).catch(function(e){notify(e.message,'error');});return;
   }
   if(action==='manual-odds'){
     if(!data.publication.open){notify('Esta edición ya no admite cambios en las cuotas.','error');return;}
@@ -1224,7 +1361,7 @@ app.addEventListener('click',function(event){
     var raw=window.prompt(message,codes.map(function(c){return prev[c]||'';}).join('; '));if(raw===null)return;
     var parts=raw.split(';');if(parts.length!==5){notify('Necesitas cinco campos separados por punto y coma (;).','error');return;}
     var record={};for(var i=0;i<5;i++){var v=parts[i].trim().replace(',','.');if(!v)continue;if(!/^\d+(\.\d{1,3})?$/.test(v)||!validOdd(v)){notify('La cuota '+(i+1)+' no es válida. Usa cuotas mayores que 1.','error');return;}record[codes[i]]=Number(v);}
-    localWeek(week,competition).manualOdds[fid]=record;try{persist();}catch(e){notify(e.message,'error');return;}load();return;
+    localWeek(week,competition).manualOdds[fid]=record;persist().then(function(){load();}).catch(function(e){notify(e.message,'error');});return;
   }
   if(action==='add-fixture'){
     var league=Number(document.getElementById('new-league').value),home=document.getElementById('new-home').value.trim(),away=document.getElementById('new-away').value.trim(),date=document.getElementById('new-date').value;
@@ -1236,17 +1373,34 @@ app.addEventListener('click',function(event){
     var start=new Date(date).toISOString();if(!inEdition({start:start},week,competition)){notify('La fecha debe estar dentro de la semana mostrada.','error');return;}
     if(weekFixtures(week,competition).some(function(f){return normalized(f.home)===normalized(home)&&normalized(f.away)===normalized(away);})){notify('Ese partido ya aparece en la semana.','error');return;}
     localWeek(week,competition).fixtures.push({id:Date.now(),league:league,home:home,away:away,start:start,source:'manual'});
-    try{persist();}catch(e){notify(e.message,'error');return;}notice='Partido registrado localmente. Añade cuotas solo si las has consultado.';noticeType='success';load();return;
+    persist().then(function(){notice='Partido registrado para todos. Añade cuotas solo si las has consultado.';noticeType='success';load();}).catch(function(e){notify(e.message,'error');});return;
   }
   if(action==='delete-fixture'){
     if(!canAddManualFixture(week,competition)){notify('No se pueden quitar partidos fuera de la ventana de esta edición.','error');return;}
     var fid=Number(t.dataset.id),used=Object.values(localWeek(week,competition).submissions).some(function(s){return (s.picks||[]).some(function(p){return p.fixtureId===fid;});});if(used){notify('Este partido ya tiene pronósticos guardados; no se puede borrar.','error');return;}
     if(!confirm('¿Quitar este partido manual de esta semana?'))return;
-    localWeek(week,competition).fixtures=localWeek(week,competition).fixtures.filter(function(f){return f.id!==fid;});delete localWeek(week,competition).manualOdds[String(fid)];persist();load();return;
+    localWeek(week,competition).fixtures=localWeek(week,competition).fixtures.filter(function(f){return f.id!==fid;});delete localWeek(week,competition).manualOdds[String(fid)];persist().then(function(){load();}).catch(function(e){notify(e.message,'error');});return;
+  }
+  if(action==='import-legacy'){
+    if(!legacyDb||!Object.keys(legacyDb.weeks||{}).length)return;
+    if(!confirm('Se añadirán los datos antiguos de este navegador a la base común, sin borrar las apuestas de los demás. ¿Continuar?'))return;
+    mergeBackup(legacyDb);
+    persist().then(function(){legacyDb=null;notice='Datos antiguos fusionados con la base común.';noticeType='success';initializedWeek='';load();}).catch(function(e){notify(e.message,'error');});return;
   }
   if(action==='refresh-odds'){refreshSource(true);notice='Consultando las cuotas públicas…';noticeType='success';render();return;}
   if(action==='export'){var text=JSON.stringify({version:1,createdAt:new Date().toISOString(),database:db},null,2),blob=new Blob([text],{type:'application/json'}),u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='copia-chuletonbet.json';a.click();setTimeout(function(){URL.revokeObjectURL(u);},1000);return;}
-  if(action==='import'){var input=document.createElement('input');input.type='file';input.accept='.json,application/json';input.onchange=function(){var f=input.files[0];if(!f)return;f.text().then(function(raw){var obj=JSON.parse(raw);if(obj.version!==1||!obj.database||!obj.database.weeks)throw new Error('Formato de copia no reconocido.');if(!confirm('¿Sustituir los datos locales actuales por esta copia?'))return;db=obj.database;if(!db.results||typeof db.results!=='object')db.results={};if(!db.resultChecks||typeof db.resultChecks!=='object')db.resultChecks={};persist();initializedWeek='';load();}).catch(function(e){notify('No se pudo importar: '+e.message,'error');});};input.click();return;}
+  if(action==='import'){
+    var input=document.createElement('input');input.type='file';input.accept='.json,application/json';
+    input.onchange=function(){var f=input.files[0];if(!f)return;
+      f.text().then(function(raw){
+        var obj=JSON.parse(raw);
+        if(obj.version!==1||!obj.database||!obj.database.weeks)throw new Error('Formato de copia no reconocido.');
+        if(!confirm('Se FUSIONARÁ esta copia con los datos de todos, conservando el registro más reciente de cada jugador. ¿Continuar?'))return;
+        mergeBackup(obj.database);
+        persist().then(function(){initializedWeek='';notice='Copia fusionada con los datos compartidos.';noticeType='success';load();}).catch(function(e){notify('No se pudo importar: '+e.message,'error');});
+      }).catch(function(e){notify('No se pudo importar: '+e.message,'error');});
+    };input.click();return;
+  }
 
 
   if(action==='save-cash'){var cashField=document.getElementById('cash-amount');if(!cashField)return;cashDraft=cashField.value;post('/api/cash',{amount:cashDraft,player:selectedPlayer||null});return;}
@@ -1279,12 +1433,22 @@ app.addEventListener('click',function(event){
 load();
 // El HTML funciona al instante, incluso sin internet; la consulta remota va en paralelo.
 refreshSource(false);
-setInterval(function(){if(document.visibilityState==='visible'&&!busy&&data){
-  // Actualizar datos públicos en segundo plano; conservar el borrador y la papeleta del usuario.
-  if(Date.now()-(remote.updatedAt||0)>12*60000)refreshSource(false);
-  refreshResults(false);
-  request('/api/state?week='+encodeURIComponent(week)+'&competition='+encodeURIComponent(competition)).then(function(fresh){data=fresh;render();}).catch(function(){/* Sin conexión: conservar vista previa. */});
-}},120000);
+setInterval(async function(){
+ if(document.visibilityState!=='visible'||busy||commitsPending||!data||
+    (document.activeElement&&document.activeElement.id==='cash-amount'))return;
+ try{
+   await syncFromCommon();
+   data=buildState(week,competition);
+   render();
+ }catch(e){commonSyncError=e.message;}
+},12000);
+setInterval(function(){
+ if(document.visibilityState==='visible'&&data){
+   if(Date.now()-(remote.updatedAt||0)>12*60000)refreshSource(false);
+   refreshResults(false);
+ }
+},120000);
+window.addEventListener('focus',function(){if(data&&!busy&&!commitsPending)syncFromCommon().then(function(){data=buildState(week,competition);render();}).catch(function(e){commonSyncError=e.message;});});
 })();
 </script>
 </body>

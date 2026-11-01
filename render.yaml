@@ -1,0 +1,20 @@
+# En Render: New > Blueprint > seleccionar este repositorio.
+# Para uso de larga duración, actualiza la base de datos a un plan persistente
+# o usa una base de datos PostgreSQL externa compatible.
+services:
+  - type: web
+    name: chuletonbet-compartido
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: chuletonbet-db
+          property: connectionString
+
+databases:
+  - name: chuletonbet-db
+    plan: free

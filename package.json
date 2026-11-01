@@ -1,0 +1,9 @@
+{
+  "name": "chuletonbet-compartido",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ChuletonBet compartido en Render con PostgreSQL",
+  "scripts": {"start": "node server.js", "check": "node --check server.js"},
+  "engines": {"node": ">=20"},
+  "dependencies": {"pg": "^8.13.1"}
+}
